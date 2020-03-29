@@ -7,9 +7,11 @@ This repository is a toy example Mask R-CNN with two features:
 
 ## Requirements
 
-Python 3.7
+python 3.7
 
-PyTorch 1.4
+pytorch 1.4
+
+matplotlib
 
 
 ## Datasets
@@ -21,4 +23,4 @@ http://host.robots.ox.ac.uk/pascal/VOC/voc2012/
 
 ## Train
 
-- Adjust parameters in ```demo.ipynb``` to train the model
+- Adjust parameters in ```train.ipynb``` to train the model
