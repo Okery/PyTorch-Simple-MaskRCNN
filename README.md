@@ -14,9 +14,14 @@ Python 3.7
 
 PyTorch 1.4
 
+
 ## Datasets
 
 Currently only support VOC 2012
 ```
 http://host.robots.ox.ac.uk/pascal/VOC/voc2012/
 ```
+
+## Train
+
+- Adjust parameters in ```demo.ipynb``` to train the model
