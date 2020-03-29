@@ -1,5 +1,4 @@
 # PyTorch-Simple-MaskRCNN
---------------------------------------------------------------------------------
 A PyTorch implementation of simple Mask R-CNN.
 
 This repository is a toy example Mask R-CNN with two features:
