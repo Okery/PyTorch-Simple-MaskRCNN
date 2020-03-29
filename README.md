@@ -11,7 +11,10 @@ python 3.7
 
 pytorch 1.4
 
+optional
+```
 matplotlib
+```
 
 
 ## Datasets
