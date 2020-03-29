@@ -16,7 +16,7 @@ PyTorch 1.4
 
 ## Datasets
 
-Support VOC 2012
+Currently only support VOC 2012
 ```
 http://host.robots.ox.ac.uk/pascal/VOC/voc2012/
 ```
