@@ -1,7 +1,6 @@
 import math
 
 import torch
-from . import _C
 
 
 class BoxCoder:
@@ -78,9 +77,16 @@ def process_box(box, score, image_shape, min_size):
 
 
 def nms(box, score, threshold):
-    if box.shape[0] == 0:
-        return torch.empty((0,), device=box.device, dtype=torch.int64)
-    return _C.nms(box, score, threshold)
+    try:
+        from . import _C
+        if box.shape[0] == 0:
+            return torch.empty((0,), device=box.device, dtype=torch.int64)
+        return _C.nms(box, score, threshold)
+    except ImportError:
+        y1, x1, y2, x2 = box.split(1, dim=1)
+        t_box = torch.stack((x1, y1, x2, y2), dim=1)
+        return torch.ops.torchvision.nms(t_box, score, threshold)
+    
 
 
 '''
