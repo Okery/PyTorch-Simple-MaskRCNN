@@ -31,6 +31,6 @@ NOTE: This is a simple model and only support ```batch_size = 1```. Set ```train
 - Adjust parameters in ```eval.ipynb``` to test the model
 
 one example:
-[example](https://github.com/Jaramies/PyTorch-Simple-MaskRCNN/blob/master/image/001.png)
+![example](https://github.com/Jaramies/PyTorch-Simple-MaskRCNN/blob/master/image/001.png)
 - I haven't trained the model properly due to the device limit, so I don't know whether the model would output good results after trained.
 
