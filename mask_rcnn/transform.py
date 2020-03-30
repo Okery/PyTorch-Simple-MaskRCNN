@@ -5,11 +5,12 @@ import torch.nn.functional as F
 
 
 class Transformer:
-    def __init__(self, min_size, max_size, image_mean, image_std):
+    def __init__(self, min_size, max_size, image_mean, image_std, mask_threshold):
         self.min_size = min_size
         self.max_size = max_size
         self.image_mean = image_mean
         self.image_std = image_std
+        self.mask_threshold = mask_threshold
         
     def __call__(self, image, target):
         image = self.normalize(image)
@@ -66,6 +67,7 @@ class Transformer:
         if 'masks' in result:
             mask = result['masks']
             mask = paste_masks_in_image(mask, box, 1, ori_image_shape)
+            mask = (mask >= self.mask_threshold).byte()
             result['masks'] = mask
             
         return result
