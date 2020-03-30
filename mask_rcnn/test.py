@@ -1,8 +1,11 @@
 import torch
+import torch.nn.functional as F
 import matplotlib.pyplot as plt
-import numpy as np
-import time
 
+from . import dataset
+
+
+classes = dataset.VOC_BBOX_LABEL_NAMES
 
 def factor_getter(i):
     base = 0.5
@@ -13,12 +16,41 @@ def factor_getter(i):
         base /= 2
         f = [base, base, base]
         f[i - 3] = 0
+    else:
+        base /= 3
+        f = [base, base, base]
     return f
+
+
+def resize(image, target, scale_factor):
+    ori_image_shape = image.shape[-2:]
+    image = F.interpolate(image[None], scale_factor=scale_factor, mode='bilinear', align_corners=False)[0]
+
+    if target is None:
+        return image, target
+
+    if 'boxes' in target:
+        box = target['boxes']
+        box[:, [0, 2]] = box[:, [0, 2]] * image.shape[-2] / ori_image_shape[0]
+        box[:, [1, 3]] = box[:, [1, 3]] * image.shape[-1] / ori_image_shape[1]
+        target['boxes'] = box
+
+    if 'masks' in target:
+        mask = target['masks']
+        mask = F.interpolate(mask[None].float(), scale_factor=scale_factor)[0].byte()
+        target['masks'] = mask
+
+    return image, target
     
 
-def show(image, box=None, mask=None): # show image, just for test
+def show(image, target=None, scale_factor=None):
     image = image.clone()
-    if mask is not None:
+    
+    if scale_factor is not None:
+        image, target = resize(image, target, scale_factor)
+        
+    if target is not None and 'masks' in target:
+        mask = target['masks']
         mask = mask.reshape(-1, 1, mask.shape[1], mask.shape[2])
         mask = mask.repeat(1, 3, 1, 1).to(image)
         for i, m in enumerate(mask):
@@ -30,10 +62,19 @@ def show(image, box=None, mask=None): # show image, just for test
     im = image.cpu().numpy()
     plt.imshow(im.transpose(1, 2, 0))
     
-    if box is not None:
-        box = box.cpu()
-        for b in box:
-            plt.plot(b[[1, 1, 3, 3, 1]], b[[0, 2, 2, 0, 0]])
+    if target is not None:
+        if 'boxes' in target:
+            box = target['boxes']
+            box = box.cpu()
+            for i, b in enumerate(box):
+                plt.plot(b[[1, 1, 3, 3, 1]], b[[0, 2, 2, 0, 0]])
+                if 'labels' in target:
+                    l = target['labels'][i]
+                    txt = classes[l]
+                    if 'scores' in target:
+                        s = target['scores'][i]
+                        txt = '{}:{}'.format(txt, s)
+                    plt.text(b[1], b[0] - 5, txt, fontsize=20)
             
     plt.title(im.shape)
     plt.axis('off')
