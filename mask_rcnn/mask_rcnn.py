@@ -24,7 +24,8 @@ class MaskRCNN(nn.Module):
                  box_fg_iou_thresh=0.5, box_bg_iou_thresh=0.5,
                  box_num_samples=512, box_positive_fraction=0.25,
                  box_reg_weights=(10., 10., 5., 5.),
-                 box_score_thresh=0.1, box_nms_thresh=0.5, box_num_detections=100):
+                 box_score_thresh=0.2, box_nms_thresh=0.5, box_num_detections=100,
+                 mask_threshold=0.5):
         super().__init__()
         self.backbone = backbone
         out_channels = backbone.out_channels
@@ -70,7 +71,8 @@ class MaskRCNN(nn.Module):
         self.transformer = Transformer(
             min_size=800, max_size=1333, 
             image_mean=[0.485, 0.456, 0.406], 
-            image_std=[0.229, 0.224, 0.225])
+            image_std=[0.229, 0.224, 0.225],
+            mask_threshold=mask_threshold)
         
     def forward(self, image, target=None):
         ori_image_shape = image.shape[-2:]
