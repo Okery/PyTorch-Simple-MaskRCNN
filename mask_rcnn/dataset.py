@@ -70,6 +70,7 @@ class VOCDataset:
             return
         
         since = time.time()
+        print('checking the dataset...')
         with open(checked_id_file_path, 'w') as f:
             for i in range(len(self)):
                 img_name = self.ids[i]
@@ -84,8 +85,8 @@ class VOCDataset:
                     
                     n = torch.where((box[:, 0] < 0) |
                                     (box[:, 1] < 0) |
-                                    (box[:, 2] > image.shape[-2]) |
-                                    (box[:, 3] > image.shape[-1]))[0]
+                                    (box[:, 2] > image.shape[-1]) |
+                                    (box[:, 3] > image.shape[-2]))[0]
                     assert len(n) == 0, \
                     '{} box out of boundary'.format(i)
                     
@@ -102,5 +103,5 @@ class VOCDataset:
                 except AssertionError as e:
                     print(img_name, e)
 
-        print('{} check over! {} samples, {:.1f} s'.format(split, len(self), time.time() - since))
+        print('{} check over! {} samples are OK; {:.1f} s'.format(split, len(self), time.time() - since))
         self.ids = [id_.strip() for id_ in open(checked_id_file_path)]
