@@ -45,7 +45,7 @@ class VOCDataset:
             labels = []
             for obj in anno.findall('object'):
                 bndbox = obj.find('bndbox')
-                bbox = [int(bndbox.find(tag).text) for tag in ['ymin', 'xmin', 'ymax', 'xmax']]
+                bbox = [int(bndbox.find(tag).text) for tag in ['xmin', 'ymin', 'xmax', 'ymax']]
                 name = obj.find('name').text
                 label = VOC_BBOX_LABEL_NAMES.index(name)
                 
