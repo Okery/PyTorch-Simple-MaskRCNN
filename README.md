@@ -8,11 +8,11 @@ This repository is a toy example of Mask R-CNN with two features:
 The code is based largely on [TorchVision](https://github.com/pytorch/vision)
 ## Requirements
 
-python 3.7
+- python>=3.7
 
-pytorch 1.4
+- PyTorch>=1.4
 
-matplotlib
+- matplotlib
 
 ## Datasets
 
@@ -34,5 +34,5 @@ Note: This is a simple model and only support ```batch_size = 1```. Set ```train
 - I haven't trained the model properly due to the device limit, so I don't know whether the model would output good results after trained.
 
 A good result should be like this:
-![example](https://github.com/Jaramies/PyTorch-Simple-MaskRCNN/blob/master/image/001.png)
+example
 
