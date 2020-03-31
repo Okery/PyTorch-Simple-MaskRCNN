@@ -31,8 +31,8 @@ def resize(image, target, scale_factor):
 
     if 'boxes' in target:
         box = target['boxes']
-        box[:, [0, 2]] = box[:, [0, 2]] * image.shape[-2] / ori_image_shape[0]
-        box[:, [1, 3]] = box[:, [1, 3]] * image.shape[-1] / ori_image_shape[1]
+        box[:, [0, 2]] = box[:, [0, 2]] * image.shape[-1] / ori_image_shape[1]
+        box[:, [1, 3]] = box[:, [1, 3]] * image.shape[-2] / ori_image_shape[0]
         target['boxes'] = box
 
     if 'masks' in target:
@@ -67,14 +67,17 @@ def show(image, target=None, scale_factor=None):
             box = target['boxes']
             box = box.cpu()
             for i, b in enumerate(box):
-                plt.plot(b[[1, 1, 3, 3, 1]], b[[0, 2, 2, 0, 0]])
+                plt.plot(b[[0, 2, 2, 0, 0]], b[[1, 1, 3, 3, 1]])
                 if 'labels' in target:
                     l = target['labels'][i]
                     txt = classes[l]
                     if 'scores' in target:
                         s = target['scores'][i]
-                        txt = '{}:{}'.format(txt, s)
-                    plt.text(b[1], b[0] - 5, txt, fontsize=20)
+                        s = round(s.item() * 100)
+                        txt = '{} {}%'.format(txt, s)
+                    plt.text(
+                        b[0], b[1], txt, fontsize=15, 
+                        bbox=dict(boxstyle='round, pad=0.2', fc='white', lw=1, alpha=0.5))# , ec='k'  
             
     plt.title(im.shape)
     plt.axis('off')
@@ -84,15 +87,15 @@ def show(image, target=None, scale_factor=None):
 def generate_bbox(num, size, manual_seed=True):
     if manual_seed:
         torch.manual_seed(3)
-    y = torch.randint(0, size[0], (2, num), dtype=torch.float32)
     x = torch.randint(0, size[1], (2, num), dtype=torch.float32)
+    y = torch.randint(0, size[0], (2, num), dtype=torch.float32)
     
     ymin = y.min(dim=0)[0]
     xmin = x.min(dim=0)[0]
     ymax = y.max(dim=0)[0] + 1
     xmax = x.max(dim=0)[0] + 1
     
-    bbox = torch.stack((ymin, xmin, ymax, xmax), dim=1)
+    bbox = torch.stack((xmin, ymin, xmax, ymax), dim=1)
     return bbox
 
 
