@@ -12,7 +12,7 @@ The code is based largely on [TorchVision](https://github.com/pytorch/vision)
 
 - PyTorch>=1.4
 
-- matplotlib
+- matplotlib, for visualization
 
 ## Datasets
 
@@ -31,7 +31,7 @@ Note: This is a simple model and only support ```batch_size = 1```. Set ```epoch
 
 - Adjust parameters in ```eval.ipynb``` to test the model
 
-- I haven't trained the model properly due to the small dataset (1463 train samples), so I don't know whether the model would output good results after trained.
+Note: I haven't trained the model properly due to the small dataset (2913 train samples), so I don't know whether the model would output good results after trained.
 
 A good result should be like this:
 ![example](https://github.com/Okery/PyTorch-Simple-MaskRCNN/blob/master/image/001.png)
