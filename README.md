@@ -34,5 +34,5 @@ Note: This is a simple model and only support ```batch_size = 1```. Set ```train
 - I haven't trained the model properly due to the device limit, so I don't know whether the model would output good results after trained.
 
 A good result should be like this:
-example
+![example](https://github.com/Okery/PyTorch-Simple-MaskRCNN/blob/master/image/001.png)
 
