@@ -22,8 +22,7 @@ class RoIAlign:
         
     def __call__(self, feature, proposal, image_shape):
         idx = proposal.new_full((proposal.shape[0], 1), 0)
-        y1, x1, y2, x2 = proposal.split(1, dim=1)
-        roi = torch.cat((idx, x1, y1, x2, y2), dim=1)
+        roi = torch.cat((idx, proposal), dim=1)
         
         self.setup_scale(feature.shape[-2:], image_shape)
         return torch.ops.torchvision.roi_align(feature, roi, self.spatial_scale, self.output_size[0], self.output_size[1], self.sampling_ratio)
