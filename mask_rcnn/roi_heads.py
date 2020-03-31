@@ -22,8 +22,7 @@ def fastrcnn_loss(class_logit, box_regression, label, regression_target):
 
 def maskrcnn_loss(mask_logit, proposal, matched_idx, label, gt_mask):
     matched_idx = matched_idx[:, None].to(proposal)
-    y1, x1, y2, x2 = proposal.split(1, dim=1)
-    roi = torch.cat((matched_idx, x1, y1, x2, y2), dim=1)
+    roi = torch.cat((matched_idx, proposal), dim=1)
             
     M = mask_logit.shape[-1]
     gt_mask = gt_mask[:, None].to(roi)
