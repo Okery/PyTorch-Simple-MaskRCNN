@@ -1,4 +1,5 @@
 # PyTorch-Simple-MaskRCNN
+
 A PyTorch implementation of simple Mask R-CNN.
 
 This repository is a toy example of Mask R-CNN with two features:
@@ -6,13 +7,16 @@ This repository is a toy example of Mask R-CNN with two features:
 - Simplified construction and easy to understand how the model works
 
 The code is based largely on [TorchVision](https://github.com/pytorch/vision)
+
 ## Requirements
 
-- python>=3.7
+- Windows with Python ≥ 3.7
 
-- PyTorch>=1.4
+- PyTorch ≥ 1.4, 
 
-- matplotlib, for visualization
+- torchvision that matches the PyTorch installation
+
+- matplotlib, needed by visualization
 
 ## Datasets
 
