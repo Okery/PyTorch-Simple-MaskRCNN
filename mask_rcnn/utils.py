@@ -65,17 +65,17 @@ class AnchorGenerator:
         hs = (sizes[:, None] * h_ratios[None, :]).view(-1)
         ws = (sizes[:, None] * w_ratios[None, :]).view(-1)
 
-        self.cell_anchor = torch.stack([-hs, -ws, hs, ws], dim=1) / 2
+        self.cell_anchor = torch.stack([-ws, -hs, ws, hs], dim=1) / 2
         
     def grid_anchor(self, grid_size, stride):
         dtype, device = self.cell_anchor.dtype, self.cell_anchor.device
-        shift_y = torch.arange(0, grid_size[0], dtype=dtype, device=device) * stride[0]
         shift_x = torch.arange(0, grid_size[1], dtype=dtype, device=device) * stride[1]
+        shift_y = torch.arange(0, grid_size[0], dtype=dtype, device=device) * stride[0]
 
         y, x = torch.meshgrid(shift_y, shift_x)
-        y = y.reshape(-1)
         x = x.reshape(-1)
-        shift = torch.stack((y, x, y, x), dim=1).reshape(-1, 1, 4)
+        y = y.reshape(-1)
+        shift = torch.stack((x, y, x, y), dim=1).reshape(-1, 1, 4)
 
         anchor = (shift + self.cell_anchor).reshape(-1, 4)
         return anchor
