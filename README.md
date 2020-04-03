@@ -12,7 +12,7 @@ The code is based largely on [TorchVision](https://github.com/pytorch/vision), b
 
 - Windows with Python 3.x
 
-- PyTorch ≥ 1.4, 
+- [PyTorch]() ≥ 1.4, 
 
 - torchvision that matches the PyTorch installation
 
@@ -26,7 +26,7 @@ http://host.robots.ox.ac.uk/pascal/VOC/voc2012/
 ```
 The code will check the dataset first before start.
 
-## Train
+## Training
 
 - Adjust parameters in ```train.ipynb``` to train the model
 
