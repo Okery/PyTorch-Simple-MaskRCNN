@@ -133,11 +133,13 @@ class RoIHeads(nn.Module):
                 pos_matched_idx = matched_idx[:num_pos]
                 mask_label = label[:num_pos]
                 
+                '''
                 # -------------- critial ----------------
                 box_regression = box_regression[:num_pos].reshape(num_pos, -1, 4)
                 idx = torch.arange(num_pos, device=mask_label.device)
                 mask_proposal = self.box_coder.decode(box_regression[idx, mask_label], mask_proposal)
                 # ---------------------------------------
+                '''
                 
                 if mask_proposal.shape[0] == 0:
                     losses.update(dict(roi_mask_loss=torch.tensor(0)))
