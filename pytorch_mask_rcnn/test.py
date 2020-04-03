@@ -8,7 +8,7 @@ from . import dataset
 
 classes = dataset.VOC_BBOX_LABEL_NAMES
 MASK_COLOR_BASE = 0.4
-FONT_SIZE = 12
+FONT_SIZE = 14
 
 def factor_getter(n):
     base = MASK_COLOR_BASE * 0.8 ** (n // 6)
@@ -78,7 +78,7 @@ def show(image, target=None, scale_factor=None):
                         txt = '{} {}%'.format(txt, s)
                     plt.text(
                         b[0], b[1], txt, fontsize=FONT_SIZE, 
-                        bbox=dict(boxstyle='round, pad=0.2', fc='white', lw=1, alpha=0.5))
+                        bbox=dict(boxstyle='round', fc='white', lw=1, alpha=0.7))
             
     plt.title(im.shape)
     plt.axis('off')
