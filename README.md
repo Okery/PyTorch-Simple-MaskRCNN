@@ -10,7 +10,7 @@ The code is based largely on [TorchVision](https://github.com/pytorch/vision), b
 
 ## Requirements
 
-- Windows with Python ≥ 3.7
+- Windows with Python 3.x
 
 - PyTorch ≥ 1.4, 
 
@@ -24,7 +24,7 @@ Currently only support VOC 2012
 ```
 http://host.robots.ox.ac.uk/pascal/VOC/voc2012/
 ```
-
+The code will check the dataset first before start.
 
 ## Train
 
@@ -41,9 +41,9 @@ Note: I haven't trained the model properly due to the small dataset (1463 train 
 A good result should be like this:
 ![example](https://github.com/Okery/PyTorch-Simple-MaskRCNN/blob/master/image/001.png)
 
-##Performance
+## Performance
 
-VOC2012 Segmentation val
+Test dataset: VOC2012-Segmentation-val.txt
 
 bbox:
 
