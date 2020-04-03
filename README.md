@@ -20,7 +20,7 @@ The code is based largely on [TorchVision](https://github.com/pytorch/vision), b
 
 ## Datasets
 
-Currently only support [VOC 2012](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar)
+Currently only support [VOC 2012](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar) (click to download)
 ```
 http://host.robots.ox.ac.uk/pascal/VOC/voc2012/
 ```
