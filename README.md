@@ -46,5 +46,7 @@ A good result should be like this:
 VOC2012 Segmentation val
 
 bbox:
-| model | backbone | epoch | mAP | AP50 | AP 75 |
+
+| model | backbone | epoch | mAP | AP50 | AP75 |
+| ---- | ---- | --- | -- | -- | -- |
 | Mask R-CNN | ResNet 50 | 15 | 59.7 | 88.0 | 68.3 |
