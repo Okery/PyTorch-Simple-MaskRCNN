@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 import torch.nn.functional as F
 from torch import nn
+from torch.utils.model_zoo import load_url
 from torchvision import models
 from torchvision.ops import misc
 
@@ -157,7 +158,32 @@ class ResBackbone(nn.Module):
         return x
 
     
-def maskrcnn_resnet50(pretrained, num_classes):
-    backbone = ResBackbone('resnet50', pretrained)
+def maskrcnn_resnet50(pretrained, num_classes, backbone_pretrained=True):
+    if pretrained:
+        backbone_pretrained = False
+        
+    backbone = ResBackbone('resnet50', backbone_pretrained)
     model = MaskRCNN(backbone, num_classes)
+    
+    if pretrained:
+        model_urls = {
+            'maskrcnn_resnet50_fpn_coco':
+                'https://download.pytorch.org/models/maskrcnn_resnet50_fpn_coco-bf2d0c1e.pth',
+        }
+        model_state_dict = load_url(model_urls['maskrcnn_resnet50_fpn_coco'])
+        
+        pretrained_msd = list(model_state_dict.values())
+        del_list = [i for i in range(265, 271)] + [i for i in range(273, 279)]
+        for i, del_idx in enumerate(del_list):
+            pretrained_msd.pop(del_idx - i)
+
+        msd = model.state_dict()
+        skip_list = [271, 272, 273, 274, 279, 280, 281, 282, 293, 294]
+        for i, name in enumerate(msd):
+            if i in skip_list:
+                continue
+            msd[name].copy_(pretrained_msd[i])
+            
+        model.load_state_dict(msd)
+    
     return model
