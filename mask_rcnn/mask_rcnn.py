@@ -3,6 +3,7 @@ from collections import OrderedDict
 import torch.nn.functional as F
 from torch import nn
 from torchvision import models
+from torchvision.ops import misc
 
 from .utils import AnchorGenerator
 from .rpn import RPNHead, RegionProposalNetwork
@@ -24,7 +25,7 @@ class MaskRCNN(nn.Module):
                  box_fg_iou_thresh=0.5, box_bg_iou_thresh=0.5,
                  box_num_samples=512, box_positive_fraction=0.25,
                  box_reg_weights=(10., 10., 5., 5.),
-                 box_score_thresh=0.2, box_nms_thresh=0.5, box_num_detections=100):
+                 box_score_thresh=0.5, box_nms_thresh=0.5, box_num_detections=100):
         super().__init__()
         self.backbone = backbone
         out_channels = backbone.out_channels
@@ -50,7 +51,7 @@ class MaskRCNN(nn.Module):
         
         resolution = box_roi_pool.output_size[0]
         in_channels = out_channels * resolution ** 2
-        mid_channels = 512
+        mid_channels = 1024
         box_predictor = FastRCNNPredictor(in_channels, mid_channels, num_classes)
         
         self.head = RoIHeads(
@@ -129,30 +130,31 @@ class MaskRCNNPredictor(nn.Sequential):
 class ResBackbone(nn.Module):
     def __init__(self, backbone_name, pretrained):
         super().__init__()
-        backbone = models.resnet.__dict__[backbone_name](pretrained=pretrained)
-        for name, parameter in backbone.named_parameters():
+        body = models.resnet.__dict__[backbone_name](
+            pretrained=pretrained, norm_layer=misc.FrozenBatchNorm2d)
+        
+        for name, parameter in body.named_parameters():
             if 'layer2' not in name and 'layer3' not in name and 'layer4' not in name:
                 parameter.requires_grad_(False)
-        layers = [l for l in backbone.children()]
-        
+                
+        self.body = nn.ModuleDict(d for i, d in enumerate(body.named_children()) if i < 8)
         in_channels = 2048
-        out_channels = 256
-        self.inner_block_module = nn.Conv2d(in_channels, out_channels, 1)
-        self.layer_block_module = nn.Conv2d(out_channels, out_channels, 3, 1, 1)
+        self.out_channels = 256
+        
+        self.inner_block_module = nn.Conv2d(in_channels, self.out_channels, 1)
+        self.layer_block_module = nn.Conv2d(self.out_channels, self.out_channels, 3, 1, 1)
         
         for m in self.children():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_uniform_(m.weight, a=1)
                 nn.init.constant_(m.bias, 0)
         
-        self.backbone = nn.Sequential(*layers[:-2])
-        self.out_channels = 256
-        
     def forward(self, x):
-        out = self.backbone(x)
-        out = self.inner_block_module(out)
-        out = self.layer_block_module(out)
-        return out
+        for module in self.body.values():
+            x = module(x)
+        x = self.inner_block_module(x)
+        x = self.layer_block_module(x)
+        return x
 
     
 def maskrcnn_resnet50(pretrained, num_classes):

@@ -2,23 +2,24 @@ import torch
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 
+from .box_ops import box_iou
 from . import dataset
 
 
 classes = dataset.VOC_BBOX_LABEL_NAMES
+MASK_COLOR_BASE = 0.4
+FONT_SIZE = 12
 
-def factor_getter(i):
-    base = 0.5
-    f = [0, 0, 0]
+def factor_getter(n):
+    base = MASK_COLOR_BASE * 0.8 ** (n // 6)
+    i = n % 6
     if i < 3:
+        f = [0, 0, 0]
         f[i] = base
-    elif i < 6:
+    else:
         base /= 2
         f = [base, base, base]
         f[i - 3] = 0
-    else:
-        base /= 3
-        f = [base, base, base]
     return f
 
 
@@ -76,12 +77,91 @@ def show(image, target=None, scale_factor=None):
                         s = round(s.item() * 100)
                         txt = '{} {}%'.format(txt, s)
                     plt.text(
-                        b[0], b[1], txt, fontsize=15, 
-                        bbox=dict(boxstyle='round, pad=0.2', fc='white', lw=1, alpha=0.5))# , ec='k'  
+                        b[0], b[1], txt, fontsize=FONT_SIZE, 
+                        bbox=dict(boxstyle='round, pad=0.2', fc='white', lw=1, alpha=0.5))
             
     plt.title(im.shape)
     plt.axis('off')
     plt.show()
+    
+    
+class APGetter:
+    def __init__(self, num_classes, device='cpu'):
+        self.container = {str(i):{'score':torch.tensor([], device=device),
+                                  'iou':torch.tensor([], device=device)} for i in range(num_classes)}
+        
+        self.thresholds = [i / 100 for i in range(50, 96, 5)]
+        self.AP_series = []
+        self.mAP = None
+        
+    def collect_data(self, result, target):
+        box, score, label = result['boxes'], result['scores'], result['labels']
+        gt_box, gt_label = target['boxes'], target['labels']
+
+        current_class = gt_label.unique()
+        for cls in current_class:
+            cls_box, cls_score = box[label == cls], score[label == cls]
+            gt_cls_box = gt_box[gt_label == cls]
+
+            if len(cls_box) == 0:
+                cls_score = cls_score.new_zeros(len(gt_cls_box))
+                cls_box_repr_iou = cls_box.new_zeros(len(gt_cls_box))
+            else:
+                cls_box_repr_iou = cls_box.new_full((len(cls_box),), -1)
+                iou = box_iou(gt_cls_box, cls_box)
+                value, idx = iou.max(dim=0)
+
+                for i in range(len(gt_cls_box)):
+                    matched_idx = torch.where(idx == i)[0]
+
+                    if len(matched_idx) == 0:
+                        cls_score = torch.cat((cls_score, cls_score.new_zeros(1)), dim=0) # 0 is critical, maybe it's 1?
+                        cls_box_repr_iou = torch.cat((cls_box_repr_iou, cls_box_repr_iou.new_zeros(1)), dim=0)
+                    else:
+                        matched_value = value[matched_idx]
+                        repr_iou, rel_idx = matched_value.max(dim=0)
+                        cls_box_repr_iou[matched_idx[rel_idx]] = repr_iou
+
+            key = str(cls.item())
+            pred_score = self.container[key]['score']
+            pred_score = torch.cat((pred_score, cls_score), dim=0)
+            self.container[key]['score'] = pred_score
+
+            pred_iou = self.container[key]['iou']
+            pred_iou = torch.cat((pred_iou, cls_box_repr_iou), dim=0)
+            self.container[key]['iou'] = pred_iou
+            
+    @staticmethod
+    def _ap_single_class(score, iou, threshold):
+        order = score.sort(descending=True)[1]
+        score, iou = score[order], iou[order]
+        label = (iou >= threshold).to(score)
+
+        sample_target = torch.where(iou >= 0)[0]
+
+        if len(sample_target) == 0:
+            return 0.
+        else:
+            precision = score.new_zeros(len(sample_target))
+
+        TP = score.new_tensor(0)
+        for i, n in enumerate(sample_target):
+            TP += label[n]
+            precision[i] = TP / (n + 1)
+
+        return precision.mean().item()
+    
+    def compute_ap(self): 
+        for t in self.thresholds:
+            AP_t = {}
+            for k, v in self.container.items():
+                score, iou = v['score'], v['iou']
+                AP_t[k] = self._ap_single_class(score, iou, t)
+
+            AP_t = torch.tensor(list(AP_t.values())).mean().item()
+            self.AP_series.append(AP_t)
+            
+        self.mAP = torch.tensor(self.AP_series).mean().item()
 
 
 def generate_bbox(num, size, manual_seed=True):

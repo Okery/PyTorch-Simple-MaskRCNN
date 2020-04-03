@@ -14,6 +14,7 @@ VOC_BBOX_LABEL_NAMES = (
 
         
 class VOCDataset:
+    # download VOC 2012: 
     # http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar
     def __init__(self, data_dir, split, train, device='cpu'):
         id_file_path = os.path.join(data_dir, 'ImageSets/Segmentation/{}.txt'.format(split))

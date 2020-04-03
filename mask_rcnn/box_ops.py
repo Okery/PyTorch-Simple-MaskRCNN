@@ -81,7 +81,7 @@ def nms(box, score, threshold):
     return torch.ops.torchvision.nms(box, score, threshold)
     
 
-# just for test. Don't use it during train
+# just for test. It is too slow. Don't use it during train
 def slow_nms(box, nms_thresh):
     idx = torch.arange(box.size(0))
     
