@@ -10,7 +10,7 @@ The code is based largely on [TorchVision](https://github.com/pytorch/vision), b
 
 ## Requirements
 
-- Windows with Python 3.x
+- Windows with Python ≥ 3.6
 
 - [PyTorch](https://pytorch.org/) ≥ 1.4
 
