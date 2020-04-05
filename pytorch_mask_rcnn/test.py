@@ -1,17 +1,19 @@
 import torch
 import torch.nn.functional as F
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    pass
 
 from .box_ops import box_iou
 from . import dataset
 
 
 classes = dataset.VOC_BBOX_LABEL_NAMES
-MASK_COLOR_BASE = 0.4
 FONT_SIZE = 14
 
-def factor_getter(n):
-    base = MASK_COLOR_BASE * 0.8 ** (n // 6)
+def factor_getter(n, base):
+    base = base * 0.8 ** (n // 6)
     i = n % 6
     if i < 3:
         f = [0, 0, 0]
@@ -44,7 +46,7 @@ def resize(image, target, scale_factor):
     return image, target
     
 
-def show(image, target=None, scale_factor=None):
+def show(image, target=None, scale_factor=None, base=0.4):
     image = image.clone()
     
     if scale_factor is not None:
@@ -55,7 +57,7 @@ def show(image, target=None, scale_factor=None):
         mask = mask.reshape(-1, 1, mask.shape[1], mask.shape[2])
         mask = mask.repeat(1, 3, 1, 1).to(image)
         for i, m in enumerate(mask):
-            factor = torch.tensor(factor_getter(i)).reshape(3, 1, 1).to(image)
+            factor = torch.tensor(factor_getter(i, base)).reshape(3, 1, 1).to(image)
             value = factor * m
             image += value
         
