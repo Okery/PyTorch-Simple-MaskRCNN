@@ -5,6 +5,10 @@ from PIL import Image
 
 import torch
 from torchvision import transforms
+try:
+    from pycocotools.coco import COCO
+except ImportError:
+    pass
 
 VOC_BBOX_LABEL_NAMES = (
     'aeroplane', 'bicycle', 'bird', 'boat', 'bottle',
@@ -14,9 +18,8 @@ VOC_BBOX_LABEL_NAMES = (
 
         
 class VOCDataset:
-    # download VOC 2012: 
-    # http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar
-    def __init__(self, data_dir, split, train, device='cpu'):
+    # download VOC 2012: http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar
+    def __init__(self, data_dir, split, train=False, device='cpu'):
         id_file_path = os.path.join(data_dir, 'ImageSets/Segmentation/{}.txt'.format(split))
         self.ids = [id_.strip() for id_ in open(id_file_path)]
         
@@ -34,12 +37,12 @@ class VOCDataset:
         image = image.to(self.device)
         
         if self.train:
-            mask = Image.open(os.path.join(self.data_dir, 'SegmentationObject/{}.png'.format(img_name)))
-            mask = transforms.ToTensor()(mask)
-            uni = mask.unique()
+            masks = Image.open(os.path.join(self.data_dir, 'SegmentationObject/{}.png'.format(img_name)))
+            masks = transforms.ToTensor()(masks)
+            uni = masks.unique()
             uni = uni[(uni > 0) & (uni < 1)]
-            mask = (mask == uni.reshape(-1, 1, 1)).to(torch.uint8)
-            mask = mask.to(self.device)
+            masks = (masks == uni.reshape(-1, 1, 1)).to(torch.uint8)
+            masks = masks.to(self.device)
         
             anno = ET.parse(os.path.join(self.data_dir, 'Annotations', '{}.xml'.format(img_name)))
             boxes = []
@@ -56,7 +59,7 @@ class VOCDataset:
             boxes = torch.tensor(boxes, dtype=image.dtype, device=self.device)
             labels = torch.tensor(labels, device=self.device)
             
-            target = dict(boxes=boxes, labels=labels, masks=mask)
+            target = dict(boxes=boxes, labels=labels, masks=masks)
             return image, target
 
         return image
@@ -106,3 +109,58 @@ class VOCDataset:
 
         print('{} check over! {} samples are OK; {:.1f} s'.format(split, len(self), time.time() - since))
         self.ids = [id_.strip() for id_ in open(checked_id_file_path)]
+        
+        
+class COCODataset:
+    def __init__(self, data_dir, split, train=False, device='cpu'):
+        ann_file = os.path.join(data_dir, 'annotations/instances_{}2017.json'.format(split))
+        self.coco = COCO(ann_file)
+        self.img_ids = list(self.coco.imgs)
+        
+        self.data_dir = data_dir
+        self.split = split
+        self.train = train
+        self.device = device
+        
+    @staticmethod
+    def _convert_box_format(box):
+        new_box = torch.zeros_like(box)
+        new_box[:, 0] = box[:, 0]
+        new_box[:, 1] = box[:, 1]
+        new_box[:, 2] = box[:, 0] + box[:, 2]
+        new_box[:, 3] = box[:, 1] + box[:, 3]
+        return new_box
+
+    def __getitem__(self, i):
+        img_id = self.img_ids[i]
+        img_info = self.coco.imgs[img_id]
+        image = Image.open(os.path.join(self.data_dir, '{}2017'.format(self.split), img_info['file_name']))
+        image = transforms.ToTensor()(image)
+        image = image.to(self.device)
+        
+        if self.train:
+            ann_ids = self.coco.getAnnIds(img_id)
+            anns = self.coco.loadAnns(ann_ids)
+            boxes = []
+            labels = []
+            masks = []
+            for ann in anns:
+                boxes.append(ann['bbox'])
+                labels.append(ann['category_id'])
+                mask = self.coco.annToMask(ann)
+                mask = torch.tensor(mask, dtype=torch.uint8, device=self.device)
+                masks.append(mask)
+            
+            boxes = torch.tensor(boxes, dtype=image.dtype, device=self.device)
+            boxes = self._convert_box_format(boxes)
+            labels = torch.tensor(labels, device=self.device)
+            masks = torch.stack(masks)
+            
+            target = dict(boxes=boxes, labels=labels, masks=masks)
+            return image, target
+
+        return image
+    
+    def __len__(self):
+        return len(self.img_ids)
+    
