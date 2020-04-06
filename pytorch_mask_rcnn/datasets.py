@@ -200,10 +200,11 @@ class COCODataset(GeneralizedDataset):
     
 
 def datasets(d, data_dir, split, train=False, device='cpu'):
-    choice = ['voc', 'VOC', 'coco', 'COCO']
+    d = d.lower()
+    choice = ['voc', 'coco']
     if d not in choice:
         raise ValueError("'d' must be in '{}', but got '{}'".format(choice, d))
-    if d in choice[:2]:
+    if d == choice[0]:
         return VOCDataset(data_dir, split, train, device)
-    if d in choice[2:4]:
+    if d == choice[1]:
         return COCODataset(data_dir, split, train, device)
