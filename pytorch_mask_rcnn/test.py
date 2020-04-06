@@ -6,11 +6,7 @@ except ImportError:
     pass
 
 from .box_ops import box_iou
-from . import dataset
 
-
-classes = dataset.VOC_BBOX_LABEL_NAMES
-FONT_SIZE = 14
 
 def factor_getter(n, base):
     base = base * 0.8 ** (n // 6)
@@ -46,7 +42,7 @@ def resize(image, target, scale_factor):
     return image, target
     
 
-def show(image, target=None, scale_factor=None, base=0.4):
+def show(image, target=None, classes=None, scale_factor=None, base=0.4):
     image = image.clone()
     
     if scale_factor is not None:
@@ -72,14 +68,16 @@ def show(image, target=None, scale_factor=None, base=0.4):
             for i, b in enumerate(box):
                 plt.plot(b[[0, 2, 2, 0, 0]], b[[1, 1, 3, 3, 1]])
                 if 'labels' in target:
-                    l = target['labels'][i]
+                    l = target['labels'][i].item()
+                    if classes is None:
+                        raise ValueError("'classes' should not be None when 'target' has 'labels'!")
                     txt = classes[l]
                     if 'scores' in target:
                         s = target['scores'][i]
                         s = round(s.item() * 100)
                         txt = '{} {}%'.format(txt, s)
                     plt.text(
-                        b[0], b[1], txt, fontsize=FONT_SIZE, 
+                        b[0], b[1], txt, fontsize=14, 
                         bbox=dict(boxstyle='round', fc='white', lw=1, alpha=0.7))
             
     plt.title(im.shape)
