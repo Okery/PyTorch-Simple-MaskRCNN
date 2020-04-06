@@ -32,7 +32,7 @@ MS COCO 2017
 ```
 http://cocodataset.org/
 ```
-The code will check the dataset first before start.
+Note: The code will check the dataset first before start. It is very necessary and may take much time if the dataset is large. Do not stop it for it's just once.
 
 ## Training
 
