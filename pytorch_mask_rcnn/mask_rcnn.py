@@ -179,6 +179,8 @@ def maskrcnn_resnet50(pretrained, num_classes, backbone_pretrained=True):
 
         msd = model.state_dict()
         skip_list = [271, 272, 273, 274, 279, 280, 281, 282, 293, 294]
+        if num_classes == 91:
+            skip_list = [271, 272, 273, 274]
         for i, name in enumerate(msd):
             if i in skip_list:
                 continue
