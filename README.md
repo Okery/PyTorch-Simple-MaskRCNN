@@ -14,13 +14,13 @@ The code is based largely on [TorchVision](https://github.com/pytorch/vision), b
 
 - [PyTorch](https://pytorch.org/) ≥ 1.4
 
-- torchvision that matches the PyTorch installation
+- Torchvision that matches the PyTorch installation
 
 optional:
 
 - matplotlib, needed by visualization
 
-- pycocotools, needed by coco dataset
+- pycocotools, needed by COCO dataset
 
 ## Datasets
 
@@ -32,6 +32,7 @@ MS COCO 2017
 ```
 http://cocodataset.org/
 ```
+The code will check the dataset first before start.
 
 ## Training
 
@@ -43,14 +44,14 @@ Note: This is a simple model and only support ```batch_size = 1```. Set ```epoch
 
 - Adjust parameters in ```eval.ipynb``` to test the model
 
-Note: I haven't trained the model properly due to the small dataset (1463 train samples), so I'm not sure whether the model would output good results after trained.
-
 A good result should be like this:
 ![example](https://github.com/Okery/PyTorch-Simple-MaskRCNN/blob/master/image/001.png)
 
 ## Performance
 
-Test dataset: VOC2012-Segmentation-val.txt
+The model is pretrained on COCO dataset.
+
+Test on VOC 2012 Segmentation val:
 
 bbox:
 
