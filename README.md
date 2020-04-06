@@ -16,15 +16,22 @@ The code is based largely on [TorchVision](https://github.com/pytorch/vision), b
 
 - torchvision that matches the PyTorch installation
 
+optional:
+
 - matplotlib, needed by visualization
+
+- pycocotools, needed by coco dataset
 
 ## Datasets
 
-Currently only support [VOC 2012](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar) (click to download).
+[PASCAL VOC 2012](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar) (click to download).
 ```
 http://host.robots.ox.ac.uk/pascal/VOC/voc2012/
 ```
-The code will check the dataset first before start.
+MS COCO 2017
+```
+http://cocodataset.org/
+```
 
 ## Training
 
