@@ -1,5 +1,3 @@
 from .mask_rcnn import maskrcnn_resnet50
-from .dataset import VOCDataset
+from .datasets import datasets
 from .test import show, APGetter
-
-
