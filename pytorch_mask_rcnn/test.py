@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 import torch
 import torch.nn.functional as F
 try:
@@ -86,13 +88,14 @@ def show(image, target=None, classes=None, scale_factor=None, base=0.4):
     
     
 class APGetter:
-    def __init__(self, num_classes, device='cpu'):
-        self.container = {str(i):{'score':torch.tensor([], device=device),
+    def __init__(self, num_classes, device='cpu', max_workers=1):
+        self.container = {i:{'score':torch.tensor([], device=device),
                                   'iou':torch.tensor([], device=device)} for i in range(num_classes)}
         
         self.thresholds = [i / 100 for i in range(50, 96, 5)]
-        self.AP_series = []
+        self.AP_series = torch.zeros((len(self.thresholds), num_classes), device=device)
         self.mAP = None
+        self.max_workers = max_workers
         
     def collect_data(self, result, target):
         box, score, label = result['boxes'], result['scores'], result['labels']
@@ -122,7 +125,7 @@ class APGetter:
                         repr_iou, rel_idx = matched_value.max(dim=0)
                         cls_box_repr_iou[matched_idx[rel_idx]] = repr_iou
 
-            key = str(cls.item())
+            key = cls.item()
             pred_score = self.container[key]['score']
             pred_score = torch.cat((pred_score, cls_score), dim=0)
             self.container[key]['score'] = pred_score
@@ -131,8 +134,11 @@ class APGetter:
             pred_iou = torch.cat((pred_iou, cls_box_repr_iou), dim=0)
             self.container[key]['iou'] = pred_iou
             
-    @staticmethod
-    def _ap_single_class(score, iou, threshold):
+
+    def _ap_single_class(self, t, k):
+        threshold = self.thresholds[t]
+        score, iou = self.container[k]['score'], self.container[k]['iou']
+        
         order = score.sort(descending=True)[1]
         score, iou = score[order], iou[order]
         label = (iou >= threshold).to(score)
@@ -140,7 +146,8 @@ class APGetter:
         sample_target = torch.where(iou >= 0)[0]
 
         if len(sample_target) == 0:
-            return 0.
+            self.AP_series[t, k] = 0.
+            return
         else:
             precision = score.new_zeros(len(sample_target))
 
@@ -148,19 +155,20 @@ class APGetter:
         for i, n in enumerate(sample_target):
             TP += label[n]
             precision[i] = TP / (n + 1)
-
-        return precision.mean().item()
-    
-    def compute_ap(self): 
-        for t in self.thresholds:
-            AP_t = {}
-            for k, v in self.container.items():
-                score, iou = v['score'], v['iou']
-                AP_t[k] = self._ap_single_class(score, iou, t)
-
-            AP_t = torch.tensor(list(AP_t.values())).mean().item()
-            self.AP_series.append(AP_t)
             
+        self.AP_series[t, k] = precision.mean()
+    
+    def compute_ap(self):
+        executor = ThreadPoolExecutor(max_workers=self.max_workers)
+        tasks = []
+        for t in range(len(self.thresholds)):
+            for k in self.container:
+                tasks.append(executor.submit(self._ap_single_class, t, k))
+
+        for future in as_completed(tasks):
+            pass
+        
+        self.AP_series = self.AP_series.mean(dim=1).tolist()
         self.mAP = torch.tensor(self.AP_series).mean().item()
 
 
