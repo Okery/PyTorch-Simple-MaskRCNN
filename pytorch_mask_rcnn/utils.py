@@ -8,6 +8,17 @@ class Matcher:
         self.allow_low_quality_matches = allow_low_quality_matches
 
     def __call__(self, iou):
+        """
+        Arguments:
+            iou (Tensor[M, N]): containing the pairwise quality between 
+            M ground-truth boxes and N predicted boxes.
+
+        Returns:
+            label (Tensor[N]): positive (1) or negative (0) label for each predicted box,
+            -1 means ignoring this box.
+            matched_idx (Tensor[N]): indices of gt box matched by each predicted box.
+        """
+        
         value, matched_idx = iou.max(dim=0)
         label = torch.full((iou.shape[1],), -1, device=iou.device) 
         

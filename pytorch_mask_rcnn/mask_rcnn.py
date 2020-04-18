@@ -14,6 +14,70 @@ from .transform import Transformer
 
 
 class MaskRCNN(nn.Module):
+    """
+    Implements Mask R-CNN.
+
+    The input image to the model is expected to be a tensor, shape [C, H, W], and should be in 0-1 range.
+
+    The behavior of the model changes depending if it is in training or evaluation mode.
+
+    During training, the model expects both the input tensor, as well as a target (dictionary),
+    containing:
+        - boxes (FloatTensor[N, 4]): the ground-truth boxes in [xmin, ymin, xmax, ymax] format, with values
+          between 0-H and 0-W
+        - labels (Int64Tensor[N]): the class label for each ground-truth box
+        - masks (UInt8Tensor[N, H, W]): the segmentation binary masks for each instance
+
+    The model returns a Dict[Tensor], containing the classification and regression losses 
+    for both the RPN and the R-CNN, and the mask loss.
+
+    During inference, the model requires only the input tensor, and returns the post-processed
+    predictions as a Dict[Tensor]. The fields of the Dict are as
+    follows:
+        - boxes (FloatTensor[N, 4]): the predicted boxes in [xmin, ymin, xmax, ymax] format, 
+          with values between 0-H and 0-W
+        - labels (Int64Tensor[N]): the predicted labels
+        - scores (FloatTensor[N]): the scores for each prediction
+        - masks (FloatTensor[N, H, W]): the predicted masks for each instance, in 0-1 range. In order to
+          obtain the final segmentation masks, the soft masks can be thresholded, generally
+          with a value of 0.5 (mask >= 0.5)
+        
+    Arguments:
+        backbone (nn.Module): the network used to compute the features for the model.
+        num_classes (int): number of output classes of the model (including the background).
+        
+        rpn_fg_iou_thresh (float): minimum IoU between the anchor and the GT box so that they can be
+            considered as positive during training of the RPN.
+        rpn_bg_iou_thresh (float): maximum IoU between the anchor and the GT box so that they can be
+            considered as negative during training of the RPN.
+        rpn_num_samples (int): number of anchors that are sampled during training of the RPN
+            for computing the loss
+        rpn_positive_fraction (float): proportion of positive anchors during training of the RPN
+        rpn_reg_weights (Tuple[float, float, float, float]): weights for the encoding/decoding of the
+            bounding boxes
+        rpn_pre_nms_top_n_train (int): number of proposals to keep before applying NMS during training
+        rpn_pre_nms_top_n_test (int): number of proposals to keep before applying NMS during testing
+        rpn_post_nms_top_n_train (int): number of proposals to keep after applying NMS during training
+        rpn_post_nms_top_n_test (int): number of proposals to keep after applying NMS during testing
+        rpn_nms_thresh (float): NMS threshold used for postprocessing the RPN proposals
+        
+        box_fg_iou_thresh (float): minimum IoU between the proposals and the GT box so that they can be
+            considered as positive during training of the classification head
+        box_bg_iou_thresh (float): maximum IoU between the proposals and the GT box so that they can be
+            considered as negative during training of the classification head
+        box_num_samples (int): number of proposals that are sampled during training of the
+            classification head
+        box_positive_fraction (float): proportion of positive proposals during training of the 
+            classification head
+        box_reg_weights (Tuple[float, float, float, float]): weights for the encoding/decoding of the
+            bounding boxes
+        box_score_thresh (float): during inference, only return proposals with a classification score
+            greater than box_score_thresh
+        box_nms_thresh (float): NMS threshold for the prediction head. Used during inference
+        box_num_detections (int): maximum number of detections, for all classes.
+        
+    """
+    
     def __init__(self, backbone, num_classes,
                  # RPN parameters
                  rpn_fg_iou_thresh=0.7, rpn_bg_iou_thresh=0.3,
@@ -111,6 +175,14 @@ class FastRCNNPredictor(nn.Module):
     
 class MaskRCNNPredictor(nn.Sequential):
     def __init__(self, in_channels, layers, dim_reduced, num_classes):
+        """
+        Arguments:
+            in_channels (int)
+            layers (Tuple[int])
+            dim_reduced (int)
+            num_classes (int)
+        """
+        
         d = OrderedDict()
         next_feature = in_channels
         for layer_idx, layer_features in enumerate(layers, 1):
@@ -158,11 +230,19 @@ class ResBackbone(nn.Module):
         return x
 
     
-def maskrcnn_resnet50(pretrained, num_classes, backbone_pretrained=True):
+def maskrcnn_resnet50(pretrained, num_classes, pretrained_backbone=True):
+    """
+    Constructs a Mask R-CNN model with a ResNet-50 backbone.
+    
+    Arguments:
+        pretrained (bool): If True, returns a model pre-trained on COCO train2017.
+        num_classes (int): number of classes (including the background).
+    """
+    
     if pretrained:
         backbone_pretrained = False
         
-    backbone = ResBackbone('resnet50', backbone_pretrained)
+    backbone = ResBackbone('resnet50', pretrained_backbone)
     model = MaskRCNN(backbone, num_classes)
     
     if pretrained:

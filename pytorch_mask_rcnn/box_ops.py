@@ -9,6 +9,15 @@ class BoxCoder:
         self.bbox_xform_clip = bbox_xform_clip
 
     def encode(self, reference_box, proposal):
+        """
+        Encode a set of proposals with respect to some
+        reference boxes
+
+        Arguments:
+            reference_boxes (Tensor[N, 4]): reference boxes
+            proposals (Tensor[N, 4]): boxes to be encoded
+        """
+        
         width = proposal[:, 2] - proposal[:, 0]
         height = proposal[:, 3] - proposal[:, 1]
         ctr_x = proposal[:, 0] + 0.5 * width
@@ -28,6 +37,15 @@ class BoxCoder:
         return delta
 
     def decode(self, delta, box):
+        """
+        From a set of original boxes and encoded relative box offsets,
+        get the decoded boxes.
+
+        Arguments:
+            delta (Tensor[N, 4]): encoded boxes.
+            boxes (Tensor[N, 4]): reference boxes.
+        """
+        
         dx = delta[:, 0] / self.weights[0]
         dy = delta[:, 1] / self.weights[1]
         dw = delta[:, 2] / self.weights[2]
@@ -56,6 +74,16 @@ class BoxCoder:
 
     
 def box_iou(box_a, box_b):
+    """
+    Arguments:
+        boxe_a (Tensor[N, 4])
+        boxe_b (Tensor[M, 4])
+
+    Returns:
+        iou (Tensor[N, M]): the NxM matrix containing the pairwise
+            IoU values for every element in box_a and box_b
+    """
+    
     lt = torch.max(box_a[:, None, :2], box_b[:, :2])
     rb = torch.min(box_a[:, None, 2:], box_b[:, 2:])
 
@@ -68,6 +96,10 @@ def box_iou(box_a, box_b):
 
 
 def process_box(box, score, image_shape, min_size):
+    """
+    Clip boxes in the image size and remove boxes which are too small.
+    """
+    
     box[:, [0, 2]] = box[:, [0, 2]].clamp(0, image_shape[1]) 
     box[:, [1, 3]] = box[:, [1, 3]].clamp(0, image_shape[0]) 
 
@@ -78,6 +110,16 @@ def process_box(box, score, image_shape, min_size):
 
 
 def nms(box, score, threshold):
+    """
+    Arguments:
+        box (Tensor[N, 4])
+        score (Tensor[N]): scores of the boxes.
+        threshold (float): iou threshold.
+
+    Returns: 
+        keep (Tensor): indices of boxes filtered by NMS.
+    """
+    
     return torch.ops.torchvision.nms(box, score, threshold)
     
 

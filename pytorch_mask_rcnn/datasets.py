@@ -13,6 +13,15 @@ except ImportError:
 
 
 class GeneralizedDataset:
+    """
+    Main class for Generalized Dataset.
+
+    Arguments:
+        ids (list[str]): images' ids
+        train (bool)
+        checked_id_file_path (str): path to save the file filled with checked ids.
+    """
+    
     def __init__(self, ids, train, checked_id_file_path):
         self.ids = ids
         self.train = train
@@ -22,6 +31,13 @@ class GeneralizedDataset:
             self.check_dataset(checked_id_file_path)
         
     def __getitem__(self, i):
+        """
+        Returns:
+            image (Tensor): the original image.
+            target (dict[Tensor]): annotations like `boxes`, `labels` and `masks`.
+                the `boxes` coordinates order is: xmin, ymin, xmax, ymax
+        """
+    
         img_id = self.ids[i]
         image = self.get_image(img_id)
         
@@ -34,6 +50,31 @@ class GeneralizedDataset:
     def __len__(self):
         return len(self.ids)
     
+    def check_dataset(self, checked_id_file_path):
+        """
+        use multithreads to accelerate the process.
+        check the dataset to avoid some problems in function `_check`.
+        """
+        if os.path.exists(checked_id_file_path):
+            self.ids = [id_.strip() for id_ in open(checked_id_file_path)]
+            return
+        
+        print('checking the dataset...')
+        
+        since = time.time()
+        executor = ThreadPoolExecutor(max_workers=self.max_workers)
+        tasks = []
+        with open(checked_id_file_path, 'w') as f:
+            seqs = torch.arange(len(self)).chunk(self.max_workers)
+            for seq in seqs:
+                tasks.append(executor.submit(self._check, f, seq.tolist()))
+                
+            for future in as_completed(tasks):
+                pass
+
+        self.ids = [id_.strip() for id_ in open(checked_id_file_path)]
+        print('{} check over! {} samples are OK; {:.1f} s'.format(checked_id_file_path, len(self), time.time() - since))
+        
     def _check(self, f, seq):
         for i in seq:
             img_id = self.ids[i]
@@ -43,6 +84,7 @@ class GeneralizedDataset:
             label = target['labels']
             
             try:
+                # some problems below:
                 assert image.shape[0] == 3, \
                 '{}: image channel != 3, {}'.format(i, image.shape[0])
 
@@ -68,27 +110,6 @@ class GeneralizedDataset:
                 f.write('{}\n'.format(img_id))
             except AssertionError as e:
                 print(img_id, e)
-    
-    def check_dataset(self, checked_id_file_path):
-        if os.path.exists(checked_id_file_path):
-            self.ids = [id_.strip() for id_ in open(checked_id_file_path)]
-            return
-        
-        print('checking the dataset...')
-        
-        since = time.time()
-        executor = ThreadPoolExecutor(max_workers=self.max_workers)
-        tasks = []
-        with open(checked_id_file_path, 'w') as f:
-            seqs = torch.arange(len(self)).chunk(self.max_workers)
-            for seq in seqs:
-                tasks.append(executor.submit(self._check, f, seq.tolist()))
-                
-            for future in as_completed(tasks):
-                pass
-
-        self.ids = [id_.strip() for id_ in open(checked_id_file_path)]
-        print('{} check over! {} samples are OK; {:.1f} s'.format(checked_id_file_path, len(self), time.time() - since))
         
         
 class VOCDataset(GeneralizedDataset):
