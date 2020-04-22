@@ -20,7 +20,7 @@ optional:
 
 - matplotlib, needed by visualization
 
-- pycocotools, needed by COCO dataset
+- [pycocotools for Windows](https://github.com/philferriere/cocoapi)
 
 ## Datasets
 
