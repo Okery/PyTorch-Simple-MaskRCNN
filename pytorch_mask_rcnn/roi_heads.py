@@ -75,7 +75,7 @@ class RoIHeads(nn.Module):
         regression_target = self.box_coder.encode(gt_box[matched_idx[pos_idx]], proposal[pos_idx])
         proposal = proposal[idx]
         matched_idx = matched_idx[idx]
-        label = gt_label[matched_idx] + 1
+        label = gt_label[matched_idx]
         num_pos = pos_idx.shape[0]
         label[num_pos:] = 0
         
@@ -102,7 +102,7 @@ class RoIHeads(nn.Module):
             
             keep = nms(box, score, self.nms_thresh)[:self.num_detections]
             box, score = box[keep], score[keep]
-            label = torch.full((len(keep),), l - 1, dtype=keep.dtype, device=device)
+            label = torch.full((len(keep),), l, dtype=keep.dtype, device=device)
             
             boxes.append(box)
             labels.append(label)
