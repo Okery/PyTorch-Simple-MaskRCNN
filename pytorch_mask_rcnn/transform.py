@@ -19,6 +19,9 @@ class Transformer:
         return image, target
 
     def normalize(self, image):
+        if image.shape[0] == 1:
+            image = image.repeat(3, 1, 1)
+        
         dtype, device = image.dtype, image.device
         mean = torch.tensor(self.image_mean, dtype=dtype, device=device)
         std = torch.tensor(self.image_std, dtype=dtype, device=device)
