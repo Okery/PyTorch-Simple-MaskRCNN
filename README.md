@@ -12,7 +12,7 @@ The code is based largely on [TorchVision](https://github.com/pytorch/vision), b
 
 - Windows with Python ≥ 3.6
 
-- [PyTorch](https://pytorch.org/) ≥ 1.4
+- [PyTorch](https://pytorch.org/) ≥ 1.4.0
 
 - Torchvision that matches the PyTorch installation
 
