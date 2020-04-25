@@ -1,6 +1,7 @@
 import os
 import time
 import xml.etree.ElementTree as ET
+from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from PIL import Image
 
@@ -17,15 +18,15 @@ class GeneralizedDataset:
     Main class for Generalized Dataset.
 
     Arguments:
-        ids (list[str]): images' ids
+        ids (List[str]): images' ids
         train (bool)
         checked_id_file_path (str): path to save the file filled with checked ids.
     """
     
-    def __init__(self, ids, train, checked_id_file_path):
+    def __init__(self, ids, train, checked_id_file_path, max_workers):
         self.ids = ids
         self.train = train
-        self.max_workers = 4
+        self.max_workers = max_workers
         
         if train:
             self.check_dataset(checked_id_file_path)
@@ -34,7 +35,7 @@ class GeneralizedDataset:
         """
         Returns:
             image (Tensor): the original image.
-            target (dict[Tensor]): annotations like `boxes`, `labels` and `masks`.
+            target (Dict[Tensor]): annotations like `boxes`, `labels` and `masks`.
                 the `boxes` coordinates order is: xmin, ymin, xmax, ymax
         """
     
@@ -53,8 +54,9 @@ class GeneralizedDataset:
     def check_dataset(self, checked_id_file_path):
         """
         use multithreads to accelerate the process.
-        check the dataset to avoid some problems in function `_check`.
+        check the dataset to avoid some problems listed in function `_check`.
         """
+        
         if os.path.exists(checked_id_file_path):
             self.ids = [id_.strip() for id_ in open(checked_id_file_path)]
             return
@@ -78,34 +80,15 @@ class GeneralizedDataset:
     def _check(self, f, seq):
         for i in seq:
             img_id = self.ids[i]
-            image, target = self[i]
+            _, target = self[i]
             box = target['boxes']
             mask = target['masks']
-            label = target['labels']
             
             try:
-                # some problems below:
-                assert image.shape[0] == 3, \
-                '{}: image channel != 3, {}'.format(i, image.shape[0])
-
-                assert len(box) > 0, \
-                '{}: len(box) = 0'.format(i)
-
+                assert len(box) > 0, '{}: len(box) = 0'.format(i)
+                
                 assert len(box) == len(mask), \
                 '{}: box not match mask, {}-{}'.format(i, box.shape[0], mask.shape[0])
-
-                assert len(box) == len(label), \
-                '{}: box not match label, {}-{}'.format(i, box.shape[0], label.shape[0])
-
-                n = torch.where((box[:, 0] < 0) |
-                                (box[:, 1] < 0) |
-                                (box[:, 2] > image.shape[-1]) |
-                                (box[:, 3] > image.shape[-2]))[0]
-                assert len(n) == 0, \
-                '{} box out of boundary'.format(i)
-
-                assert image.shape[-2:] == mask.shape[-2:], \
-                '{}: mask size not match image size, {}-{}'.format(i, image.shape[-2:], mask.shape[-2:])
                 
                 f.write('{}\n'.format(img_id))
             except AssertionError as e:
@@ -114,7 +97,7 @@ class GeneralizedDataset:
         
 class VOCDataset(GeneralizedDataset):
     # download VOC 2012: http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar
-    def __init__(self, data_dir, split, train, device):
+    def __init__(self, data_dir, split, train, device, max_workers):
         self.data_dir = data_dir
         self.device = device
         self.dtype = None
@@ -123,13 +106,13 @@ class VOCDataset(GeneralizedDataset):
             'bus', 'car', 'cat', 'chair', 'cow', 'diningtable',
             'dog', 'horse', 'motorbike', 'person', 'pottedplant',
             'sheep', 'sofa', 'train', 'tvmonitor')
-        self.classes = {i:self._classes[i] for i in range(len(self._classes))}
+        self.classes = {i: k for i, k in enumerate(self._classes, 1)}
         
         id_file_path = os.path.join(data_dir, 'ImageSets/Segmentation/{}.txt'.format(split))
         ids = [id_.strip() for id_ in open(id_file_path)]
         checked_id_file_path = os.path.join(data_dir, 'ImageSets/Segmentation/checked_{}.txt'.format(split))
         
-        super().__init__(ids, train, checked_id_file_path)
+        super().__init__(ids, train, checked_id_file_path, max_workers)
 
     def get_image(self, img_id):
         image = Image.open(os.path.join(self.data_dir, 'JPEGImages/{}.jpg'.format(img_id)))
@@ -152,7 +135,7 @@ class VOCDataset(GeneralizedDataset):
             bndbox = obj.find('bndbox')
             bbox = [int(bndbox.find(tag).text) for tag in ['xmin', 'ymin', 'xmax', 'ymax']]
             name = obj.find('name').text
-            label = self._classes.index(name)
+            label = self._classes.index(name) + 1
 
             boxes.append(bbox)
             labels.append(label)
@@ -165,18 +148,18 @@ class VOCDataset(GeneralizedDataset):
         
         
 class COCODataset(GeneralizedDataset):
-    def __init__(self, data_dir, split, train, device):
+    def __init__(self, data_dir, split, train, device, max_workers):
         ann_file = os.path.join(data_dir, 'annotations/instances_{}2017.json'.format(split))
         self.coco = COCO(ann_file)
         self.data_dir = data_dir
         self.split = split
         self.device = device
-        self.classes = {(k - 1):v['name'] for k, v in self.coco.cats.items()}
+        self.classes = {k: v['name'] for k, v in self.coco.cats.items()}
         
         ids = list(self.coco.imgs)
         checked_id_file_path = os.path.join(data_dir, 'checked_{}.txt'.format(split))
         
-        super().__init__(ids, train, checked_id_file_path)
+        super().__init__(ids, train, checked_id_file_path, max_workers)
         
     @staticmethod
     def _convert_box_format(box):
@@ -206,7 +189,7 @@ class COCODataset(GeneralizedDataset):
         if len(anns) > 0:
             for ann in anns:
                 boxes.append(ann['bbox'])
-                labels.append(ann['category_id'] - 1)
+                labels.append(ann['category_id'])
                 mask = self.coco.annToMask(ann)
                 mask = torch.tensor(mask, dtype=torch.uint8, device=self.device)
                 masks.append(mask)
@@ -216,16 +199,19 @@ class COCODataset(GeneralizedDataset):
             labels = torch.tensor(labels, device=self.device)
             masks = torch.stack(masks)
 
-        target = dict(boxes=boxes, labels=labels, masks=masks)
+        target = dict(image_id=torch.tensor(img_id), boxes=boxes, labels=labels, masks=masks)
         return target
     
 
-def datasets(d, data_dir, split, train=False, device='cpu'):
-    d = d.lower()
+def datasets(ds, data_dir, split, train=False, device='cpu', max_workers=None):
+    if max_workers is None:
+        max_workers = cpu_count() // 2
+    
+    ds = ds.lower()
     choice = ['voc', 'coco']
-    if d not in choice:
-        raise ValueError("'d' must be in '{}', but got '{}'".format(choice, d))
-    if d == choice[0]:
-        return VOCDataset(data_dir, split, train, device)
-    if d == choice[1]:
-        return COCODataset(data_dir, split, train, device)
+    if ds not in choice:
+        raise ValueError("'ds' must be in '{}', but got '{}'".format(choice, ds))
+    if ds == choice[0]:
+        return VOCDataset(data_dir, split, train, device, max_workers)
+    if ds == choice[1]:
+        return COCODataset(data_dir, split, train, device, max_workers)
