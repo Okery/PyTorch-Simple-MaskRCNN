@@ -52,4 +52,7 @@ class RoIAlign:
         roi = torch.cat((idx, proposal), dim=1)
         
         self.setup_scale(feature.shape[-2:], image_shape)
-        return torch.ops.torchvision.roi_align(feature, roi, self.spatial_scale, self.output_size[0], self.output_size[1], self.sampling_ratio)
+        args = [feature, roi, self.spatial_scale, self.output_size[0], self.output_size[1], self.sampling_ratio]
+        if torch.__version__ >= '1.5.0':
+            args.append(False)
+        return torch.ops.torchvision.roi_align(*args)
