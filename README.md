@@ -20,7 +20,7 @@ optional:
 
 - matplotlib, needed by visualization
 
-- [pycocotools](https://github.com/cocodataset/cocoapi); Windows version is [here](https://github.com/philferriere/cocoapi)
+- [pycocotools](https://github.com/cocodataset/cocoapi) for COCO dataset and evaluation; Windows version is [here](https://github.com/philferriere/cocoapi)
 
 There is a problem with pycocotools for Windows. See [Issue #356](https://github.com/cocodataset/cocoapi/issues/356)
 
