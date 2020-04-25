@@ -20,9 +20,9 @@ optional:
 
 - matplotlib, needed by visualization
 
-- [pycocotools for Windows](https://github.com/philferriere/cocoapi)
+- [pycocotools](https://github.com/cocodataset/cocoapi); for [Windows](https://github.com/philferriere/cocoapi)
 
-There is a problem with pycocotools. See [Issue #356](https://github.com/cocodataset/cocoapi/issues/356)
+There is a problem with pycocotools for Windows. See [Issue #356](https://github.com/cocodataset/cocoapi/issues/356)
 
 ## Datasets
 
