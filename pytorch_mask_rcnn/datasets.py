@@ -1,13 +1,17 @@
 import os
+import json
 import time
 import xml.etree.ElementTree as ET
 from multiprocessing import cpu_count
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from PIL import Image
 
 import torch
+import numpy as np
 from torchvision import transforms
 try:
+    import pycocotools.mask as mask_utils
     from pycocotools.coco import COCO
 except ImportError:
     pass
@@ -99,6 +103,7 @@ class VOCDataset(GeneralizedDataset):
     # download VOC 2012: http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar
     def __init__(self, data_dir, split, train, device, max_workers):
         self.data_dir = data_dir
+        self.split = split
         self.device = device
         self.dtype = None
         self._classes = (
@@ -143,8 +148,64 @@ class VOCDataset(GeneralizedDataset):
         boxes = torch.tensor(boxes, dtype=torch.float, device=self.device)
         labels = torch.tensor(labels, device=self.device)
 
-        target = dict(boxes=boxes, labels=labels, masks=masks)
+        img_id = self.ids.index(img_id)
+        target = dict(image_id=torch.tensor(img_id), boxes=boxes, labels=labels, masks=masks)
         return target
+    
+    def convert_to_coco_format(self):
+        ann_file = os.path.join(self.data_dir, 'Annotations', 'instances_{}2012.json'.format(self.split))
+        if os.path.exists(ann_file):
+            self.coco = COCO(ann_file)
+            return
+
+        voc_dataset = datasets('voc', self.data_dir, self.split, True)
+        instances = defaultdict(list)
+        instances['categories'] = [{'id': k, 'name': v} for k, v in voc_dataset.classes.items()]
+
+        ann_id = 0
+        for image, target in voc_dataset:
+            image_id = target['image_id'].item()
+            boxes = target['boxes']
+            masks = target['masks']
+            labels = target['labels'].tolist()
+
+            filename = voc_dataset.ids[image_id] + '.jpg'
+            h, w = image.shape[-2:]
+            img = {'id': image_id, 'filename': filename, 'height': h, 'width': w}
+            instances['images'].append(img)
+
+            xmin, ymin, xmax, ymax = boxes.unbind(1)
+            boxes = torch.stack((xmin, ymin, xmax - xmin, ymax - ymin), dim=1)
+            area = boxes[:, 2] * boxes[:, 3]
+            boxes = boxes.tolist()
+            area = area.tolist()
+
+            rles = [
+                mask_utils.encode(np.array(mask[:, :, None], dtype=np.uint8, order='F'))[0]
+                for mask in masks
+            ]
+            for rle in rles:
+                rle['counts'] = rle['counts'].decode('utf-8')
+
+            for i, rle in enumerate(rles):
+                instances['annotations'].extend(
+                    [
+                        {
+                            'image_id': image_id,
+                            'id': ann_id + i,
+                            'category_id': labels[i],
+                            'segmentation': rle,
+                            'bbox': boxes[i],
+                            'area': area[i],
+                            'iscrowd': 0,
+                        }
+
+                    ]
+                )
+            ann_id += len(rles)
+
+        json.dump(instances, open(ann_file, 'w'))
+        self.coco = COCO(ann_file)
         
         
 class COCODataset(GeneralizedDataset):
