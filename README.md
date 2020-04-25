@@ -22,6 +22,8 @@ optional:
 
 - [pycocotools for Windows](https://github.com/philferriere/cocoapi)
 
+There is a problem with pycocotools. See [Issue #356](https://github.com/cocodataset/cocoapi/issues/356)
+
 ## Datasets
 
 [PASCAL VOC 2012](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar) (click to download).
