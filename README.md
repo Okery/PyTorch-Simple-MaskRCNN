@@ -22,9 +22,9 @@ optional:
 
 - [pycocotools](https://github.com/cocodataset/cocoapi) for COCO dataset and evaluation; Windows version is [here](https://github.com/philferriere/cocoapi)
 
-There is a problem with pycocotools for Windows. See [Issue #356](https://github.com/cocodataset/cocoapi/issues/356)
+There is a problem with pycocotools for Windows. See [Issue #356](https://github.com/cocodataset/cocoapi/issues/356).
 
-Besides, it's better to remove the prints in pycocotools
+Besides, it's better to remove the prints in pycocotools.
 
 ## Datasets
 
