@@ -16,32 +16,24 @@ class CocoEvaluator:
         self.coco_eval = {k: COCOeval(coco_gt, iouType=k) for k in iou_types}
 
         self.img_ids = []
-        self.eval_imgs = {k: [] for k in iou_types}
+        self.predictions = {}
 
     def update(self, predictions):
         img_ids = list(predictions.keys())
         self.img_ids.extend(img_ids)
-
+        self.predictions.update(predictions)
+            
+    def accumulate(self):
         for iou_type in self.iou_types:
-            results = self.prepare(predictions, iou_type)
+            results = self.prepare(self.predictions, iou_type)
             coco_dt = self.coco_gt.loadRes(results) if results else COCO()
             coco_eval = self.coco_eval[iou_type]
 
             coco_eval.cocoDt = coco_dt
-            coco_eval.params.imgIds = img_ids
-            coco_eval.evaluate()
-
-            self.eval_imgs[iou_type].extend(coco_eval.evalImgs)
-            
-    def synchronize_between_processes(self):
-        for iou_type in self.iou_types:
-            coco_eval = self.coco_eval[iou_type]
-            coco_eval.evalImgs = self.eval_imgs[iou_type]
             coco_eval.params.imgIds = self.img_ids
+            coco_eval.evaluate()
             coco_eval._paramsEval = copy.deepcopy(coco_eval.params)
             
-    def accumulate(self):
-        for coco_eval in self.coco_eval.values():
             coco_eval.accumulate()
 
     def summarize(self):
