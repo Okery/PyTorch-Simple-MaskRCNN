@@ -1,4 +1,4 @@
-# PyTorch-Simple-MaskRCNN
+# PyTorch-MaskRCNN-PANet
 
 A PyTorch implementation of Mask R-CNN with PANet.
 
