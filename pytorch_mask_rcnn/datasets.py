@@ -203,7 +203,7 @@ class VOCDataset(GeneralizedDataset):
 
             filename = voc_dataset.ids[image_id] + '.jpg'
             h, w = image.shape[-2:]
-            img = {'id': image_id, 'filename': filename, 'height': h, 'width': w}
+            img = {'id': image_id, 'file_name': filename, 'height': h, 'width': w}
             instances['images'].append(img)
 
             anns = target_to_coco_ann(target)
