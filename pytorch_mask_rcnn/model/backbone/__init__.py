@@ -1,0 +1,1 @@
+from .resnet import resnet_pan_backbone
