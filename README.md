@@ -1,16 +1,16 @@
 # PyTorch-Simple-MaskRCNN
 
-A PyTorch implementation of simple Mask R-CNN.
+A PyTorch implementation of Mask R-CNN with PANet.
 
-This repository is a toy example of Mask R-CNN with two features:
+This repository owns two features:
 - It is pure python code and can be run immediately using PyTorch 1.4 without build
-- Simplified construction and easy to understand how the model works
+- Simplified structure and easy to understand how the model works
 
-The code is based largely on [TorchVision](https://github.com/pytorch/vision), but simplified a lot and faster (1.5x).
+The code is based largely on [TorchVision](https://github.com/pytorch/vision).
 
 ## Requirements
 
-- Windows with Python ≥ 3.6
+- Python ≥ 3.6
 
 - [PyTorch](https://pytorch.org/) ≥ 1.4.0
 
@@ -36,29 +36,25 @@ MS COCO 2017
 ```
 http://cocodataset.org/
 ```
-Note: The code will check the dataset first before start. It is very necessary and may take much time if the dataset is large. Do not stop it for it's just once.
+Note: The code will check the dataset first before start. It will remove some images without annotations. This step is very necessary and may take much time if the dataset is large. Do not stop it for it's just once.
 
 ## Training
 
-- Adjust parameters in ```train.ipynb``` to train the model
+- Modify parameters in ```train.py``` to train the model
 
-Note: This is a simple model and only support ```batch_size = 1```. Set ```epochs = n``` to train n epochs, the model will save and resume automatically using the ```checkpoint.pth``` file.
+## Demo
 
-## Evaluation
+- Modify parameters in ```demo.ipynb``` to test the model
 
-- Adjust parameters in ```eval.ipynb``` to test the model
-
-A good result should be like this:
+Some results:
 ![example](https://github.com/Okery/PyTorch-Simple-MaskRCNN/blob/master/image/001.png)
 
 ## Performance
 
-The model is pretrained on COCO dataset.
+The model utlizes the official pre-trained weights of Mask R-CNN model and is finetuned in different datasets.
 
-Test on VOC 2012 Segmentation val:
+VOC 2012 Segmentation val:
 
-bbox:
-
-| model | backbone | epoch | mAP | AP50 | AP75 |
-| ---- | ---- | --- | -- | -- | -- |
-| Mask R-CNN | ResNet 50 | 15 | 59.7 | 88.0 | 68.3 |
+| model | backbone | epoch | bbox AP | AP50 | AP75 | mask AP | AP50| AP75|
+| ---- | ---- | --- | -- | -- | -- | -- | -- | -- |
+| Mask R-CNN | ResNet 50 PANet | 21 | 42.3 | 67.5 | 47.2 | 35.3 | 58.7 | 37.8 |
