@@ -161,16 +161,4 @@ def batched_nms(boxes, scores, idxs, iou_threshold):
     keep = nms(boxes_for_nms, scores, iou_threshold)
     return keep
     
-
-# just for test. It is too slow. Don't use it during train
-def slow_nms(box, nms_thresh):
-    idx = torch.arange(box.size(0))
     
-    keep = []
-    while idx.size(0) > 0:
-        keep.append(idx[0].item())
-        head_box = box[idx[0], None, :]
-        remain = torch.where(box_iou(head_box, box[idx]) <= nms_thresh)[1]
-        idx = idx[remain]
-    
-    return keep

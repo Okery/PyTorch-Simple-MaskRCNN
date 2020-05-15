@@ -20,7 +20,7 @@ class Matcher:
         """
         
         value, matched_idx = iou.max(dim=0)
-        label = torch.full((iou.shape[1],), -1, device=iou.device) 
+        label = torch.full((iou.shape[1],), -1, dtype=torch.float, device=iou.device) 
         
         label[value >= self.high_threshold] = 1
         label[value < self.low_threshold] = 0

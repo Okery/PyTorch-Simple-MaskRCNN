@@ -51,13 +51,13 @@ class MultiScaleRoIAlign:
             results (List[Tensor])
         
         """
-        
+        dtype = x[0].dtype
         ids = torch.cat([b.new_full((b.shape[0], 1), i) for i, b in enumerate(boxes)])
         boxes = torch.cat(boxes)
-        rois = torch.cat((ids, boxes), dim=1)
+        rois = torch.cat((ids, boxes), dim=1).to(dtype)
         
         self.setup_scales(x, image_size)
-        
+        #print(x[0].dtype, rois.dtype)
         results = [
             roi_align(feature, rois, self.output_size, scale, self.sampling_ratio)
             for feature, scale in zip(x, self.scales)

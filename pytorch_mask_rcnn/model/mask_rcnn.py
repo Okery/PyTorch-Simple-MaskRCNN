@@ -173,9 +173,8 @@ def maskrcnn_resnet50(pretrained, num_classes, pretrained_backbone=False, ckpt_d
     """
     
     if pretrained:
-        backbone_pretrained = False
+        pretrained_backbone = False
         
-    
     backbone = resnet_pan_backbone('resnet50', pretrained_backbone, ckpt_dir)
     model = MaskRCNN(backbone, num_classes)
     
