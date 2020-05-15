@@ -94,11 +94,11 @@ class VOCDataset(GeneralizedDataset):
             boxes.append(bbox)
             labels.append(label)
 
-        boxes = torch.tensor(boxes, dtype=torch.float32)
+        boxes = torch.tensor(boxes, dtype=torch.float)
         labels = torch.tensor(labels)
 
         img_id = self.ids.index(img_id)
-        target = dict(image_id=torch.tensor(img_id), boxes=boxes, labels=labels, masks=masks)
+        target = dict(image_id=torch.tensor([img_id]), boxes=boxes, labels=labels, masks=masks)
         return target
     
     def convert_to_coco_format(self):

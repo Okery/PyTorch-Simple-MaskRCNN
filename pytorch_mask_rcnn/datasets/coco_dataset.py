@@ -62,5 +62,5 @@ class COCODataset(GeneralizedDataset):
             labels = torch.tensor(labels)
             masks = torch.stack(masks)
 
-        target = dict(image_id=torch.tensor(img_id), boxes=boxes, labels=labels, masks=masks)
+        target = dict(image_id=torch.tensor([img_id]), boxes=boxes, labels=labels, masks=masks)
         return target
