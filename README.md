@@ -4,7 +4,7 @@ A PyTorch implementation of Mask R-CNN with PANet.
 
 This repository owns two features:
 - It is pure python code and can be run immediately using PyTorch 1.4 without build
-- Simplified structure and easy to understand how the model works
+- Support automatic mixed precision and distributed training.
 
 The code is based largely on [TorchVision](https://github.com/pytorch/vision).
 
@@ -21,10 +21,6 @@ optional:
 - matplotlib, needed by visualization
 
 - [pycocotools](https://github.com/cocodataset/cocoapi) for COCO dataset and evaluation; Windows version is [here](https://github.com/philferriere/cocoapi)
-
-There is a problem with pycocotools for Windows. See [Issue #356](https://github.com/cocodataset/cocoapi/issues/356).
-
-Besides, it's better to remove the prints in pycocotools.
 
 ## Datasets
 
