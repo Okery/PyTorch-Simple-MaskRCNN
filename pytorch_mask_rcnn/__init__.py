@@ -6,7 +6,9 @@ email = 'jaramywu@gmail.com'
 
 from .model import maskrcnn_resnet50
 from .engine import train_one_epoch, evaluate
+from .distributed import init_distributed_mode, get_rank
 from .utils import *
+from .gpu import *
 
 try:
     from .visualize import show

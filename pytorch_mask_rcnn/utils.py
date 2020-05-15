@@ -3,28 +3,7 @@ import re
 import torch
 from .datasets import VOCDataset, COCODataset
 
-__all__ = ['gpu_info', 'collate_wrapper', 'datasets', 'save_ckpt', 'parse_eval_output']
-
-
-def gpu_info(show=False):
-    ngpus = torch.cuda.device_count()
-    
-    properties = []
-    for dev in range(ngpus):
-        prop = torch.cuda.get_device_properties(dev)
-        properties.append({
-            'name': prop.name,
-            'capability': (prop.major, prop.minor),
-            'total_momory': round(prop.total_memory / 1073741824, 2), # unit GB
-            'sm_count': prop.multi_processor_count
-        })
-       
-    if show:
-        print('cuda: {}'.format(torch.cuda.is_available()))
-        print('available GPU(s): {}'.format(ngpus))
-        for i, p in enumerate(properties):
-            print('{}: {}'.format(i, p))
-    return properties
+__all__ = ['collate_wrapper', 'datasets', 'save_ckpt']
 
 
 def collate_wrapper(batch):
@@ -80,11 +59,11 @@ class TextArea:
         
     def __str__(self):
         return ''.join(self.buffer)
-    
-    
-def parse_eval_output(txt):
-    values = re.findall(r'(\d{3})\n', txt)
-    values = [int(v) / 10 for v in values]
-    result = {'bbox AP': values[0], 'mask AP': values[12]}
-    return result
+
+    def get_AP(self):
+        txt = str(self)
+        values = re.findall(r'(\d{3})\n', txt)
+        values = [int(v) / 10 for v in values]
+        result = {'bbox AP': values[0], 'mask AP': values[12]}
+        return result
     
