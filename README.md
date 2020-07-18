@@ -65,6 +65,6 @@ The model utilizes part of TorchVision's weights which is pretrained on COCO dat
 
 Test on VOC 2012 Segmentation val:
 
-| model | backbone | epoch | bbox AP | mask AP |
-| ---- | ---- | --- | -- | -- |
-| Mask R-CNN | ResNet 50 | 5 | 52.2 | 37.0 |
+| model | backbone | imgs/s (train) | imgs/s (test)|epoch | bbox AP | mask AP |
+| ---- | ---- | --- | --- | -- | -- | -- |
+| Mask R-CNN | ResNet 50 | 11.5 | 15.8 | 5 | 52.2 | 37.0 |
