@@ -2,9 +2,6 @@
 
 
 dataset="coco"
-print_freq=50
-epochs=1
-ckpt_path="maskrcnn_${dataset}.pth"
 iters=200
 
 if [ $dataset = "voc" ]
@@ -16,6 +13,5 @@ then
 fi
 
 
-python train.py --use-cuda --epochs ${epochs} --iters ${iters} \
---dataset ${dataset} --data-dir ${data_dir} --ckpt-path ${ckpt_path} --print-freq ${print_freq}
+python train.py --use-cuda --iters ${iters} --dataset ${dataset} --data-dir ${data_dir}
 
