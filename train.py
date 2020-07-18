@@ -32,7 +32,7 @@ def main(args):
     params = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.SGD(
         params, lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
-    lr_lambda = lambda x: bisect.bisect([22, 26], x) ** 0.1
+    lr_lambda = lambda x: 0.1 ** bisect.bisect([22, 26], x)
     
     start_epoch = 0
     prefix, ext = os.path.splitext(args.ckpt_path)
