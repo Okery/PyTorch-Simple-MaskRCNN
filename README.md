@@ -54,7 +54,7 @@ The code will save and resume automatically using the checkpoint file.
 
 ## Evaluation
 
-- Adjust parameters in ```eval.ipynb``` to test the model
+- Modify the parameters in ```eval.ipynb``` to test the model.
 
 A good result should be like this:
 ![example](https://github.com/Okery/PyTorch-Simple-MaskRCNN/blob/master/image/001.png)
