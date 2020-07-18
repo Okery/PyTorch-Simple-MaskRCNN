@@ -60,7 +60,7 @@ class VOCDataset(GeneralizedDataset):
         self.train = train
         
         # object detection task
-        id_file = os.path.join(data_dir, "ImageSets/Main/{}.txt".format(split))
+        id_file = os.path.join(data_dir, "ImageSets/Segmentation/{}.txt".format(split))
         self.ids = [id_.strip() for id_ in open(id_file)]
         self.id_compare_fn = lambda x: int(x.replace("_", ""))
         
