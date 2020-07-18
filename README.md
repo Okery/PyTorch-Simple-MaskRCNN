@@ -61,12 +61,10 @@ A good result should be like this:
 
 ## Performance
 
-The model is pretrained on COCO dataset.
+The model utilizes part of TorchVision's weights which is pretrained on COCO dataset.
 
 Test on VOC 2012 Segmentation val:
 
-bbox:
-
-| model | backbone | epoch | mAP | AP50 | AP75 |
-| ---- | ---- | --- | -- | -- | -- |
-| Mask R-CNN | ResNet 50 | 15 | 59.7 | 88.0 | 68.3 |
+| model | backbone | epoch | bbox AP | mask AP |
+| ---- | ---- | --- | -- | -- |
+| Mask R-CNN | ResNet 50 | 5 | 52.2 | 37.0 |
