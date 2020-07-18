@@ -63,7 +63,7 @@ A good result should be like this:
 
 The model utilizes part of TorchVision's weights which is pretrained on COCO dataset.
 
-Test on VOC 2012 Segmentation val:
+Test on VOC 2012 Segmentation val, on 1 RTX 2080Ti:
 
 | model | backbone | imgs/s (train) | imgs/s (test)|epoch | bbox AP | mask AP |
 | ---- | ---- | --- | --- | -- | -- | -- |
