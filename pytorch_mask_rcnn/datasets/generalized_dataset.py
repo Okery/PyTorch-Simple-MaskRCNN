@@ -9,9 +9,6 @@ from torchvision import transforms
 class GeneralizedDataset:
     """
     Main class for Generalized Dataset.
-
-    Arguments:
-        checked_id_file (str): path to save the file filled with checked ids.
     """
     
     def __init__(self, max_workers=2, verbose=False):
@@ -59,7 +56,8 @@ class GeneralizedDataset:
          
         info = [line.strip().split(", ") for line in open(checked_id_file)]
         self.ids, self.aspect_ratios = zip(*info)
-        print("{} check over! {} samples are OK; {:.1f} s".format(checked_id_file, len(self), time.time() - since))
+        print("checked id file: {}".format(checked_id_file))
+        print("{} samples are OK; {:.1f} seconds".format(len(self), time.time() - since))
         
     def _check(self, seq):
         out = []
