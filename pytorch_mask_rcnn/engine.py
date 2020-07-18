@@ -1,9 +1,12 @@
-import sys
 import time
 
 import torch
 
 from .utils import Meter, TextArea
+try:
+    from .datasets import CocoEvaluator, prepare_for_coco
+except:
+    pass
 
 
 def train_one_epoch(model, optimizer, data_loader, device, epoch, args):
@@ -32,10 +35,6 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, args):
         losses = model(image, target)
         total_loss = sum(losses.values())
         m_m.update(time.time() - S)
-
-        if not torch.isfinite(total_loss):
-            print("Loss is {}, stopping training".format(total_loss.item()))
-            sys.exit(1)
             
         S = time.time()
         total_loss.backward()
@@ -58,12 +57,10 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, args):
 def evaluate(model, data_loader, device, args, generate=True):
     if generate:
         iter_eval = generate_results(model, data_loader, device, args)
-      
-    from .datasets import CocoEvaluator
 
-    dataset = data_loader.dataset
+    dataset = data_loader #
     iou_types = ["bbox", "segm"]
-    coco_evaluator = CocoEvaluator(dataset.coco, dataset.ann_labels, iou_types)
+    coco_evaluator = CocoEvaluator(dataset.coco, iou_types)
 
     results = torch.load(args.results, map_location="cpu")
 
@@ -87,10 +84,11 @@ def evaluate(model, data_loader, device, args, generate=True):
 @torch.no_grad()   
 def generate_results(model, data_loader, device, args):
     iters = len(data_loader) if args.iters < 0 else args.iters
+    ann_labels = data_loader.ann_labels
         
     t_m = Meter("total")
     m_m = Meter("model")
-    results = {}
+    coco_results = []
     model.eval()
     A = time.time()
     for i, (image, target) in enumerate(data_loader):
@@ -103,8 +101,9 @@ def generate_results(model, data_loader, device, args):
         torch.cuda.synchronize()
         output = model(image)
         m_m.update(time.time() - S)
-        output = {k: v.cpu() for k, v in output.items()}
-        results.update({target["image_id"].item(): output})
+        
+        prediction = {target["image_id"].item(): {k: v.cpu() for k, v in output.items()}}
+        coco_results.extend(prepare_for_coco(prediction, ann_labels))
 
         t_m.update(time.time() - T)
         if i >= iters - 1:
@@ -115,7 +114,8 @@ def generate_results(model, data_loader, device, args):
     
     S = time.time()
     print("all gather: {:.1f}s".format(time.time() - S))
-    torch.save(results, args.results)
+    torch.save(coco_results, args.results)
         
     return A / iters
     
+
