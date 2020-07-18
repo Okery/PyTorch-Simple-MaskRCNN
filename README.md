@@ -41,7 +41,11 @@ Note: The code will check the dataset first before start, filtering samples with
 ## Training
 
 ```
-python train.py --use-cuda --epochs 1 --iters 200 --dataset coco --data-dir /data/coco2017 --ckpt-path /ckpt/maskrcnn_coco.pth --print-freq 50
+python train.py --use-cuda --iters 200 --dataset coco --data-dir /data/coco2017
+```
+or modify the parameters in ```run.sh```, and run:
+```
+bash ./run.sh
 ```
 
 Note: This is a simple model and only support ```batch_size = 1```. 
