@@ -36,13 +36,17 @@ MS COCO 2017
 ```
 http://cocodataset.org/
 ```
-Note: The code will check the dataset first before start. It is very necessary and may take much time if the dataset is large. Do not stop it for it's just once.
+Note: The code will check the dataset first before start, filtering samples without annotations.
 
 ## Training
 
-- Adjust parameters in ```train.ipynb``` to train the model
+```
+python train.py --use-cuda --epochs 1 --iters 200 --dataset coco --data-dir /data/coco2017 --ckpt-path /ckpt/maskrcnn_coco.pth --print-freq 50
+```
 
-Note: This is a simple model and only support ```batch_size = 1```. Set ```epochs = n``` to train n epochs, the model will save and resume automatically using the ```checkpoint.pth``` file.
+Note: This is a simple model and only support ```batch_size = 1```. 
+
+The code will save and resume automatically using the checkpoint file.
 
 ## Evaluation
 
