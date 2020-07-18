@@ -5,6 +5,9 @@ from PIL import Image
 from collections import defaultdict
 
 import torch
+import numpy as np
+import pycocotools.mask as mask_util
+from torchvision import transforms
 
 from .generalized_dataset import GeneralizedDataset
 
@@ -29,7 +32,7 @@ def target_to_coco_ann(target):
     boxes = boxes.tolist()
     
     rles = [
-        mask_utils.encode(np.array(mask[:, :, None], dtype=np.uint8, order='F'))[0]
+        mask_util.encode(np.array(mask[:, :, None], dtype=np.uint8, order='F'))[0]
         for mask in masks
     ]
     for rle in rles:
@@ -59,12 +62,12 @@ class VOCDataset(GeneralizedDataset):
         self.split = split
         self.train = train
         
-        # object detection task
+        # instances segmentation task
         id_file = os.path.join(data_dir, "ImageSets/Segmentation/{}.txt".format(split))
         self.ids = [id_.strip() for id_ in open(id_file)]
         self.id_compare_fn = lambda x: int(x.replace("_", ""))
         
-        self.ann_file = os.path.join(data_dir, "Annotations/detection_{}.json".format(split))
+        self.ann_file = os.path.join(data_dir, "Annotations/instances_{}.json".format(split))
         self._coco = None
         
         self.classes = VOC_CLASSES
@@ -127,6 +130,8 @@ class VOCDataset(GeneralizedDataset):
     
     def convert_to_coco_format(self, overwrite=False):
         if overwrite or not os.path.exists(self.ann_file):
+            
+            
             print("Generating COCO-style annotations...")
             voc_dataset = VOCDataset(self.data_dir, self.split, True)
             instances = defaultdict(list)

@@ -66,10 +66,12 @@ class GeneralizedDataset:
             target = self.get_target(img_id)
             boxes = target["boxes"]
             labels = target["labels"]
+            masks = target["masks"]
 
             try:
                 assert len(boxes) > 0, "{}: len(boxes) = 0".format(i)
                 assert len(boxes) == len(labels), "{}: len(boxes) != len(labels)".format(i)
+                assert len(boxes) == len(masks), "{}: len(boxes) != len(masks)".format(i)
 
                 out.append((img_id, self._aspect_ratios[i]))
             except AssertionError as e:
