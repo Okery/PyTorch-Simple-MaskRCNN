@@ -1,13 +1,19 @@
 import torch
-import torch.nn.functional as F
-try:
-    import matplotlib.pyplot as plt
-except ImportError:
-    pass
+import matplotlib.pyplot as plt
+from matplotlib import patches
 
 
-def factor_getter(n, base):
-    base = base * 0.8 ** (n // 6)
+def xyxy2xywh(box):
+    new_box = torch.zeros_like(box)
+    new_box[:, 0] = box[:, 0]
+    new_box[:, 1] = box[:, 1]
+    new_box[:, 2] = box[:, 2] - box[:, 0]
+    new_box[:, 3] = box[:, 3] - box[:, 1]
+    return new_box
+
+
+def factor(n, base=1):
+    base = base * 0.7 ** (n // 6) # mask 0.8
     i = n % 6
     if i < 3:
         f = [0, 0, 0]
@@ -19,65 +25,66 @@ def factor_getter(n, base):
     return f
 
 
-def resize(image, target, scale_factor):
-    ori_image_shape = image.shape[-2:]
-    image = F.interpolate(image[None], scale_factor=scale_factor, mode='bilinear', align_corners=False)[0]
-
-    if target is None:
-        return image, target
-
-    if 'boxes' in target:
-        box = target['boxes']
-        box[:, [0, 2]] = box[:, [0, 2]] * image.shape[-1] / ori_image_shape[1]
-        box[:, [1, 3]] = box[:, [1, 3]] * image.shape[-2] / ori_image_shape[0]
-        target['boxes'] = box
-
-    if 'masks' in target:
-        mask = target['masks']
-        mask = F.interpolate(mask[None].float(), scale_factor=scale_factor)[0].byte()
-        target['masks'] = mask
-
-    return image, target
+def show(images, targets=None, classes=None):
+    if isinstance(images, (list, tuple)):
+        for i in range(len(images)):
+            show_single(images[i], targets[i] if targets else targets, classes)
+    else:
+        show_single(images, targets, classes)
+        
     
-
-def show(image, target=None, classes=None, scale_factor=None, base=0.4):
+def show_single(image, target, classes):
+    """
+    Show the image, with or without the target
+    Arguments:
+        image (Tensor[3, H, W])
+        target (Dict[Tensor])
+    """
     image = image.clone()
-    
-    if scale_factor is not None:
-        image, target = resize(image, target, scale_factor)
-        
-    if target is not None and 'masks' in target:
-        mask = target['masks']
-        mask = mask.reshape(-1, 1, mask.shape[1], mask.shape[2])
-        mask = mask.repeat(1, 3, 1, 1).to(image)
-        for i, m in enumerate(mask):
-            factor = torch.tensor(factor_getter(i, base)).reshape(3, 1, 1).to(image)
-            value = factor * m
+    if target and "masks" in target:
+        masks = target["masks"].unsqueeze(1)
+        masks = masks.repeat(1, 3, 1, 1)
+        for i, m in enumerate(masks):
+            f = torch.tensor(factor(i, 0.4)).reshape(3, 1, 1).to(image)
+            value = f * m
             image += value
-        
+    
+    ax = plt.subplot(111)
     image = image.clamp(0, 1)
     im = image.cpu().numpy()
-    plt.imshow(im.transpose(1, 2, 0))
-    
-    if target is not None:
-        if 'boxes' in target:
-            box = target['boxes']
-            box = box.cpu()
-            for i, b in enumerate(box):
-                plt.plot(b[[0, 2, 2, 0, 0]], b[[1, 1, 3, 3, 1]])
-                if 'labels' in target:
-                    l = target['labels'][i].item()
-                    if classes is None:
-                        raise ValueError("'classes' should not be None when 'target' has 'labels'!")
-                    txt = classes[l]
-                    if 'scores' in target:
-                        s = target['scores'][i]
-                        s = round(s.item() * 100)
-                        txt = '{} {}%'.format(txt, s)
-                    plt.text(
-                        b[0], b[1], txt, fontsize=14, 
-                        bbox=dict(boxstyle='round', fc='white', lw=1, alpha=0.7))
+    ax.imshow(im.transpose(1, 2, 0)) # RGB
+    H, W = image.shape[-2:]
+    ax.set_title("H: {}   W: {}".format(H, W))
+    ax.axis("off")
+
+    if target:
+        if "labels" in target:
+            if classes is None:
+                raise ValueError("'classes' should not be None when 'target' has 'labels'!")
+            tags = {l: i for i, l in enumerate(tuple(set(target["labels"].tolist())))}
             
-    plt.title(im.shape)
-    plt.axis('off')
+        index = 0
+        if "boxes" in target:
+            boxes = target["boxes"]
+            boxes = xyxy2xywh(boxes).cpu().detach()
+            for i, b in enumerate(boxes):
+                if "labels" in target:
+                    l = target["labels"][i].item()
+                    index = tags[l]
+                    txt = classes[l]
+                    if "scores" in target:
+                        s = target["scores"][i]
+                        s = round(s.item() * 100)
+                        txt = "{} {}%".format(txt, s)
+                    ax.text(
+                        b[0], b[1], txt, fontsize=9, color=(1, 1, 1),  
+                        horizontalalignment="left", verticalalignment="bottom",
+                        bbox=dict(boxstyle="square", fc="black", lw=1, alpha=1)
+                    )
+                    
+                    
+                rect = patches.Rectangle(b[:2], b[2], b[3], linewidth=2, edgecolor=factor(index), facecolor="none")
+                ax.add_patch(rect)
+
     plt.show()
+    
