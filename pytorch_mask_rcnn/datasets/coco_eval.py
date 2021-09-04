@@ -18,8 +18,13 @@ class CocoEvaluator:
         #self.ann_labels = ann_labels
         self.coco_eval = {iou_type: COCOeval(coco_gt, iouType=iou_type)
                          for iou_type in iou_types}
+        
+        self.has_results = False
             
     def accumulate(self, coco_results): # input all predictions
+        if len(coco_results) == 0:
+            return
+        
         image_ids = list(set([res["image_id"] for res in coco_results]))
         for iou_type in self.iou_types:
             coco_eval = self.coco_eval[iou_type]
@@ -31,11 +36,16 @@ class CocoEvaluator:
             coco_eval._paramsEval = copy.deepcopy(coco_eval.params)
 
             coco_eval.accumulate() # 3s
+            
+        self.has_results = True
     
     def summarize(self):
-        for iou_type in self.iou_types:
-            print("IoU metric: {}".format(iou_type))
-            self.coco_eval[iou_type].summarize()
+        if self.has_results:
+            for iou_type in self.iou_types:
+                print("IoU metric: {}".format(iou_type))
+                self.coco_eval[iou_type].summarize()
+        else:
+            print("evaluation has no results")
 
     '''
     def prepare(self, predictions, iou_type):
