@@ -1,3 +1,4 @@
+import sys
 import time
 
 import torch
@@ -55,6 +56,7 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, args):
             
 
 def evaluate(model, data_loader, device, args, generate=True):
+    iter_eval = None
     if generate:
         iter_eval = generate_results(model, data_loader, device, args)
 
@@ -111,9 +113,6 @@ def generate_results(model, data_loader, device, args):
      
     A = time.time() - A 
     print("iter: {:.1f}, total: {:.1f}, model: {:.1f}".format(1000*A/iters,1000*t_m.avg,1000*m_m.avg))
-    
-    S = time.time()
-    print("all gather: {:.1f}s".format(time.time() - S))
     torch.save(coco_results, args.results)
         
     return A / iters
