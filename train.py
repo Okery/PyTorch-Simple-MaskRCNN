@@ -3,7 +3,9 @@ import glob
 import os
 import re
 import time
+
 import torch
+
 import pytorch_mask_rcnn as pmr
     
     
@@ -93,7 +95,7 @@ if __name__ == "__main__":
     parser.add_argument("--use-cuda", action="store_true")
     
     parser.add_argument("--dataset", default="coco", help="coco or voc")
-    parser.add_argument("--data-dir", default="/data/coco2017")
+    parser.add_argument("--data-dir", default="E:/PyTorch/data/coco2017")
     parser.add_argument("--ckpt-path")
     parser.add_argument("--results")
     
@@ -103,8 +105,8 @@ if __name__ == "__main__":
     parser.add_argument("--momentum", type=float, default=0.9)
     parser.add_argument("--weight-decay", type=float, default=0.0001)
     
-    parser.add_argument("--epochs", type=int, default=1)
-    parser.add_argument("--iters", type=int, default=200, help="max iters per epoch, -1 denotes auto")
+    parser.add_argument("--epochs", type=int, default=3)
+    parser.add_argument("--iters", type=int, default=10, help="max iters per epoch, -1 denotes auto")
     parser.add_argument("--print-freq", type=int, default=100, help="frequency of printing losses")
     args = parser.parse_args()
     
@@ -113,7 +115,7 @@ if __name__ == "__main__":
     if args.ckpt_path is None:
         args.ckpt_path = "./maskrcnn_{}.pth".format(args.dataset)
     if args.results is None:
-        args.results = os.path.join(os.path.dirname(args.ckpt_path), "results.pth")
+        args.results = os.path.join(os.path.dirname(args.ckpt_path), "maskrcnn_results.pth")
     
     main(args)
     
