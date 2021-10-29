@@ -31,14 +31,15 @@ class TextArea:
         return "".join(self.buffer)
 
     def get_AP(self):
+        result = {"bbox AP": 0.0, "mask AP": 0.0}
+        
         txt = str(self)
         values = re.findall(r"(\d{3})\n", txt)
         if len(values) > 0:
             values = [int(v) / 10 for v in values]
             result = {"bbox AP": values[0], "mask AP": values[12]}
-            return result
-        else:
-            return txt
+            
+        return result
     
     
 class Meter:

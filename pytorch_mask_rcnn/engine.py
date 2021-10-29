@@ -39,9 +39,10 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, args):
             
         S = time.time()
         total_loss.backward()
+        b_m.update(time.time() - S)
+        
         optimizer.step()
         optimizer.zero_grad()
-        b_m.update(time.time() - S)
 
         if num_iters % args.print_freq == 0:
             print("{}\t".format(num_iters), "\t".join("{:.3f}".format(l.item()) for l in losses.values()))
@@ -86,7 +87,6 @@ def evaluate(model, data_loader, device, args, generate=True):
 @torch.no_grad()   
 def generate_results(model, data_loader, device, args):
     iters = len(data_loader) if args.iters < 0 else args.iters
-    ann_labels = data_loader.ann_labels
         
     t_m = Meter("total")
     m_m = Meter("model")
@@ -100,12 +100,12 @@ def generate_results(model, data_loader, device, args):
         target = {k: v.to(device) for k, v in target.items()}
 
         S = time.time()
-        torch.cuda.synchronize()
+        #torch.cuda.synchronize()
         output = model(image)
         m_m.update(time.time() - S)
         
         prediction = {target["image_id"].item(): {k: v.cpu() for k, v in output.items()}}
-        coco_results.extend(prepare_for_coco(prediction, ann_labels))
+        coco_results.extend(prepare_for_coco(prediction))
 
         t_m.update(time.time() - T)
         if i >= iters - 1:
