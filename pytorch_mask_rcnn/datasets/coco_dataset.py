@@ -18,10 +18,7 @@ class COCODataset(GeneralizedDataset):
         self.coco = COCO(ann_file)
         self.ids = [str(k) for k in self.coco.imgs]
         
-        self._classes = {k: v["name"] for k, v in self.coco.cats.items()}
-        self.classes = tuple(self.coco.cats[k]["name"] for k in sorted(self.coco.cats))
-        # resutls' labels convert to annotation labels
-        self.ann_labels = {self.classes.index(v): k for k, v in self._classes.items()}
+        self.classes = {k: v["name"] for k, v in self.coco.cats.items()}
         
         checked_id_file = os.path.join(data_dir, "checked_{}.txt".format(split))
         if train:
@@ -36,13 +33,9 @@ class COCODataset(GeneralizedDataset):
         return image.convert("RGB")
     
     @staticmethod
-    def convert_to_xyxy(box): # box format: (xmin, ymin, w, h)
-        new_box = torch.zeros_like(box)
-        new_box[:, 0] = box[:, 0]
-        new_box[:, 1] = box[:, 1]
-        new_box[:, 2] = box[:, 0] + box[:, 2]
-        new_box[:, 3] = box[:, 1] + box[:, 3]
-        return new_box # new_box format: (xmin, ymin, xmax, ymax)
+    def convert_to_xyxy(boxes): # box format: (xmin, ymin, w, h)
+        x, y, w, h = boxes.T
+        return torch.stack((x, y, x + w, y + h), dim=1) # new_box format: (xmin, ymin, xmax, ymax)
         
     def get_target(self, img_id):
         img_id = int(img_id)
@@ -55,8 +48,7 @@ class COCODataset(GeneralizedDataset):
         if len(anns) > 0:
             for ann in anns:
                 boxes.append(ann['bbox'])
-                name = self._classes[ann["category_id"]]
-                labels.append(self.classes.index(name))
+                labels.append(ann["category_id"])
                 mask = self.coco.annToMask(ann)
                 mask = torch.tensor(mask, dtype=torch.uint8)
                 masks.append(mask)

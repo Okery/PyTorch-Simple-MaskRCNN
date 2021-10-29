@@ -70,9 +70,8 @@ class VOCDataset(GeneralizedDataset):
         self.ann_file = os.path.join(data_dir, "Annotations/instances_{}.json".format(split))
         self._coco = None
         
-        self.classes = VOC_CLASSES
-        # resutls' labels convert to annotation labels
-        self.ann_labels = {self.classes.index(n): i for i, n in enumerate(self.classes)}
+        # classes's values must start from 1, because 0 means background in the model
+        self.classes = {i: n for i, n in enumerate(VOC_CLASSES, 1)}
         
         checked_id_file = os.path.join(os.path.dirname(id_file), "checked_{}.txt".format(split))
         if train:
@@ -108,7 +107,7 @@ class VOCDataset(GeneralizedDataset):
             bndbox = obj.find("bndbox")
             bbox = [int(bndbox.find(tag).text) for tag in ["xmin", "ymin", "xmax", "ymax"]]
             name = obj.find("name").text
-            label = self.classes.index(name)
+            label = VOC_CLASSES.index(name) + 1
 
             boxes.append(bbox)
             labels.append(label)
@@ -130,12 +129,10 @@ class VOCDataset(GeneralizedDataset):
     
     def convert_to_coco_format(self, overwrite=False):
         if overwrite or not os.path.exists(self.ann_file):
-            
-            
             print("Generating COCO-style annotations...")
             voc_dataset = VOCDataset(self.data_dir, self.split, True)
             instances = defaultdict(list)
-            instances["categories"] = [{"id": i, "name": n} for i, n in enumerate(voc_dataset.classes)]
+            instances["categories"] = [{"id": i + 1, "name": n} for i, n in enumerate(VOC_CLASSES)]
 
             ann_id_start = 0
             for image, target in voc_dataset:

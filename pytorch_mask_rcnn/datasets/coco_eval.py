@@ -44,6 +44,47 @@ class CocoEvaluator:
                 self.coco_eval[iou_type].summarize()
         else:
             print("evaluation has no results")
+            
+            
+def prepare_for_coco(predictions):
+    coco_results = []
+    for original_id, prediction in predictions.items():
+        if len(prediction) == 0:
+            continue
+
+        boxes = prediction["boxes"]
+        scores = prediction["scores"]
+        labels = prediction["labels"]
+        masks = prediction["masks"]
+
+        x1, y1, x2, y2 = boxes.unbind(1)
+        boxes = torch.stack((x1, y1, x2 - x1, y2 - y1), dim=1)
+        boxes = boxes.tolist()
+        scores = prediction["scores"].tolist()
+        labels = prediction["labels"].tolist()
+
+        masks = masks > 0.5
+        rles = [
+            mask_util.encode(np.array(mask[:, :, np.newaxis], dtype=np.uint8, order="F"))[0]
+            for mask in masks
+        ]
+        for rle in rles:
+            rle["counts"] = rle["counts"].decode("utf-8")
+
+        coco_results.extend(
+            [
+                {
+                    "image_id": original_id,
+                    "category_id": labels[i],
+                    "bbox": boxes[i],
+                    "segmentation": rle,
+                    "score": scores[i],
+                }
+                for i, rle in enumerate(rles)
+            ]
+        )
+    return coco_results    
+
 
     '''
     def prepare(self, predictions, iou_type):
@@ -121,42 +162,3 @@ class CocoEvaluator:
         return coco_results
     '''
     
-def prepare_for_coco(predictions, ann_labels):
-    coco_results = []
-    for original_id, prediction in predictions.items():
-        if len(prediction) == 0:
-            continue
-
-        boxes = prediction["boxes"]
-        scores = prediction["scores"]
-        labels = prediction["labels"]
-        masks = prediction["masks"]
-
-        x1, y1, x2, y2 = boxes.unbind(1)
-        boxes = torch.stack((x1, y1, x2 - x1, y2 - y1), dim=1)
-        boxes = boxes.tolist()
-        scores = prediction["scores"].tolist()
-        labels = prediction["labels"].tolist()
-        labels = [ann_labels[l] for l in labels]
-
-        masks = masks > 0.5
-        rles = [
-            mask_util.encode(np.array(mask[:, :, np.newaxis], dtype=np.uint8, order="F"))[0]
-            for mask in masks
-        ]
-        for rle in rles:
-            rle["counts"] = rle["counts"].decode("utf-8")
-
-        coco_results.extend(
-            [
-                {
-                    "image_id": original_id,
-                    "category_id": labels[i],
-                    "bbox": boxes[i],
-                    "segmentation": rle,
-                    "score": scores[i],
-                }
-                for i, rle in enumerate(rles)
-            ]
-        )
-    return coco_results    
