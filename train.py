@@ -28,15 +28,17 @@ def main(args):
     # -------------------------------------------------------------------------- #
 
     print(args)
-    num_classes = len(d_train.dataset.classes) + 1 # including background class
+    num_classes = max(d_train.dataset.classes) + 1 # including background class
     model = pmr.maskrcnn_resnet50(True, num_classes).to(device)
     
     params = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.SGD(
         params, lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
-    lr_lambda = lambda x: 0.1 ** bisect.bisect([22, 26], x)
+    lr_lambda = lambda x: 0.1 ** bisect.bisect(args.lr_steps, x)
     
     start_epoch = 0
+    
+    # find all checkpoints, and load the latest checkpoint
     prefix, ext = os.path.splitext(args.ckpt_path)
     ckpts = glob.glob(prefix + "-*" + ext)
     ckpts.sort(key=lambda x: int(re.search(r"-(\d+){}".format(ext), os.path.split(x)[1]).group(1)))
@@ -58,7 +60,7 @@ def main(args):
             
         A = time.time()
         args.lr_epoch = lr_lambda(epoch) * args.lr
-        print("lr_epoch: {:.4f}, factor: {:.4f}".format(args.lr_epoch, lr_lambda(epoch)))
+        print("lr_epoch: {:.5f}, factor: {:.5f}".format(args.lr_epoch, lr_lambda(epoch)))
         iter_train = pmr.train_one_epoch(model, optimizer, d_train, device, epoch, args)
         A = time.time() - A
         
@@ -67,7 +69,7 @@ def main(args):
         B = time.time() - B
 
         trained_epoch = epoch + 1
-        print("training: {:.2f} s, evaluation: {:.2f} s".format(A, B))
+        print("training: {:.1f} s, evaluation: {:.1f} s".format(A, B))
         pmr.collect_gpu_info("maskrcnn", [1 / iter_train, 1 / iter_eval])
         print(eval_output.get_AP())
 
@@ -77,14 +79,14 @@ def main(args):
         prefix, ext = os.path.splitext(args.ckpt_path)
         ckpts = glob.glob(prefix + "-*" + ext)
         ckpts.sort(key=lambda x: int(re.search(r"-(\d+){}".format(ext), os.path.split(x)[1]).group(1)))
-        n = 5
+        n = 10
         if len(ckpts) > n:
             for i in range(len(ckpts) - n):
                 os.system("rm {}".format(ckpts[i]))
         
     # -------------------------------------------------------------------------- #
 
-    print("\ntotal time of this training: {:.2f} s".format(time.time() - since))
+    print("\ntotal time of this training: {:.1f} s".format(time.time() - since))
     if start_epoch < args.epochs:
         print("already trained: {} epochs\n".format(trained_epoch))
     
@@ -100,7 +102,7 @@ if __name__ == "__main__":
     parser.add_argument("--results")
     
     parser.add_argument("--seed", type=int, default=3)
-    parser.add_argument('--lr-steps', nargs="+", type=int, default=[22, 26])
+    parser.add_argument('--lr-steps', nargs="+", type=int, default=[6, 7])
     parser.add_argument("--lr", type=float)
     parser.add_argument("--momentum", type=float, default=0.9)
     parser.add_argument("--weight-decay", type=float, default=0.0001)
