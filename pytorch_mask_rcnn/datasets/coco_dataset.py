@@ -18,6 +18,7 @@ class COCODataset(GeneralizedDataset):
         self.coco = COCO(ann_file)
         self.ids = [str(k) for k in self.coco.imgs]
         
+        # classes's values must start from 1, because 0 means background in the model
         self.classes = {k: v["name"] for k, v in self.coco.cats.items()}
         
         checked_id_file = os.path.join(data_dir, "checked_{}.txt".format(split))
