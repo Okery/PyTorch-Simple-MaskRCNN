@@ -14,7 +14,7 @@ The code is based largely on [TorchVision](https://github.com/pytorch/vision), b
 
 - **[PyTorch](https://pytorch.org/) ≥ 1.4.0**
 
-- **matplotlib** - visualizing images and results
+- **matplotlib**, **OpenCV** - visualizing images and results
 
 - **[pycocotools](https://github.com/cocodataset/cocoapi)** - for COCO dataset and evaluation; Windows version is [here](https://github.com/philferriere/cocoapi)
 
@@ -32,7 +32,7 @@ If you want to train your own dataset, you may:
 
 - convert your dataset to COCO-style
 
-**PASCAL VOC 2012** ([download](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar)): ```http://host.robots.ox.ac.uk/pascal/VOC/voc2012/```
+**PASCAL VOC 2012**: ```http://host.robots.ox.ac.uk/pascal/VOC/voc2012/```
 
 **MS COCO 2017**: ```http://cocodataset.org/```
 
