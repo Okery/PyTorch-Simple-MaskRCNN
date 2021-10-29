@@ -5,6 +5,6 @@ from .utils import *
 from .gpu import *
 
 try:
-    from .visualize import show
+    from .visualizer import *
 except ImportError:
     pass
